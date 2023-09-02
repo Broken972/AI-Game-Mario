@@ -1,32 +1,14 @@
--- Loading constants module
-dofile("./controllers/constante.lua")
-
--- Loading population module
-dofile("./controllers/population.lua")
-
--- Loading neurone module
-dofile("./controllers/neurone.lua")
-
--- Loading connexion module
-dofile("./controllers/connexion.lua")
-
--- Loading reseau module
-dofile("./controllers/reseau.lua")
-
--- Loading espece module
-dofile("./controllers/espece.lua")
-
--- Loading utils module
-dofile("./controllers/utils.lua")
-
--- Loading affichage module
-dofile("./controllers/affichage.lua")
-
--- Loading interaction module
-dofile("./controllers/interaction.lua")
-
--- Loading panel module
-dofile("./controllers/utils.lua")
+-- Loading modules
+local constante = require("./controllers/constante")
+local population = require("./controllers/population")
+local neurone = require("./controllers/neurone")
+local connexion = require("./controllers/connexion")
+local reseau = require("./controllers/reseau")
+local espece = require("./controllers/espece")
+local utils = require("./controllers/utils")
+local affichage = require("./controllers/affichage")
+local interaction = require("./controllers/interaction")
+local panel = require("./controllers/panel")
 
 
 event.onexit(function()
@@ -47,14 +29,7 @@ else
 	lancerNiveau()
 
 	form = forms.newform(TAILLE_FORM_W, TAILLE_FORM_H, "Informations")
-	labelInfo = forms.label(form, "a maj", 0, 0, 350, 220)
-	estAccelere = forms.checkbox(form, "Accelerer", 10, 220)
-	estAfficheReseau = forms.checkbox(form, "Afficher reseau", 10, 240)
-	estAfficheInfo = forms.checkbox(form, "Afficher bandeau", 10, 260)
-	forms.button(form, "Pause", traitementPause, 10, 285)
-	forms.button(form, "Sauvegarder", activerSauvegarde, 10, 315)
-	forms.button(form, "Charger", activerChargement, 100, 315)
-	forms.button(form, "Réinitialiser fitness max", resetFitnessMax, 100, 285)
+	initializeUI()
 
 	laPopulation = newPopulation() 
 	

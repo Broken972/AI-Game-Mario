@@ -48,7 +48,7 @@ ENCRAGE_X_OUTPUT = 200
 ENCRAGE_Y_OUTPUT = 40
 
 -- Autres paramètres d'affichage pour le réseau
-ESPACE_Y_OUTPUT = TAILLE_OUTPUT_H + 2.5
+ESPACE_Y_OUTPUT = TAILLE_OUTPUT_H + 5
 NB_HIDDEN_PAR_LIGNE = 10
 
 -- ########## Constantes pour la fitness ##########
@@ -59,7 +59,7 @@ NB_FRAME_RESET_BASE = 30
 NB_FRAME_RESET_PROGRES = 350
 NB_NEURONE_MAX = 100000
 NB_INPUT = NB_TILE_W * NB_TILE_H
-NB_OUTPUT = 8
+NB_OUTPUT = 5
 NB_INDIVIDU_POPULATION = 100
 
 -- ########## Constantes pour le tri des espèces ##########
@@ -81,11 +81,11 @@ CHANCE_MUTATION_NEURONE = 0.35
 -- ########## Correspondance des boutons avec l'émulateur ##########
 
 lesBoutons = {
-	{nom = "P1 A"},
-	{nom = "P1 B"},
-	{nom = "P1 X"},
-	{nom = "P1 Y"},
-	{nom = "P1 Up"},
+	{nom = "P1 A"}, sauter
+	-- {nom = "P1 B"},sauter
+	-- {nom = "P1 X"},
+	{nom = "P1 Y"}, courir
+	-- {nom = "P1 Up"},
 	{nom = "P1 Down"},
 	{nom = "P1 Left"},
 	{nom = "P1 Right"}
