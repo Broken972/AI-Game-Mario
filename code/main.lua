@@ -11,10 +11,10 @@ dofile("./controllers/neurone.lua")
 dofile("./controllers/connexion.lua")
 
 -- Loading reseau module
--- dofile("./controllers/reseau.lua")
+dofile("./controllers/reseau.lua")
 
 -- Loading espece module
--- dofile("./controllers/espece.lua")
+dofile("./controllers/espece.lua")
 
 -- Loading utils module
 -- dofile("./controllers/utils.lua")
@@ -44,17 +44,7 @@ dofile("./controllers/connexion.lua")
 
 
 
--- Crée une nouvelle espèce (un regroupement de réseaux, d'individus)
-function newEspece()
-    local espece = {
-        nbEnfant = 0,            -- Nombre d'enfants que cette espèce a créé
-        fitnessMoyenne = 0,      -- Fitness moyenne de l'espèce
-        fitnessMax = 0,          -- Fitness maximale atteinte par l'espèce
-        lesReseaux = {}          -- Tableau qui regroupe les réseaux de l'espèce
-    }
 
-    return espece
-end
 
 
 
