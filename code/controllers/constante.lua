@@ -81,10 +81,10 @@ CHANCE_MUTATION_NEURONE = 0.35
 -- ########## Correspondance des boutons avec l'émulateur ##########
 
 lesBoutons = {
-	{nom = "P1 A"}, sauter
+	{nom = "P1 A"}, -- sauter
 	-- {nom = "P1 B"},sauter
 	-- {nom = "P1 X"},
-	{nom = "P1 Y"}, courir
+	{nom = "P1 Y"}, -- courir
 	-- {nom = "P1 Up"},
 	{nom = "P1 Down"},
 	{nom = "P1 Left"},
