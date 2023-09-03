@@ -29,6 +29,7 @@ else
 	lancerNiveau()
 
 	form = forms.newform(TAILLE_FORM_W, TAILLE_FORM_H, "Informations")
+	
 	initializeUI()
 
 	laPopulation = newPopulation() 
