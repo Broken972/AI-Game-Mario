@@ -54,3 +54,10 @@ Suivez ces étapes pour mettre en place l'IA de Mario :
 ## 🕹️ Comment jouer
 
 Une fois que vous avez lancé l'IA, elle prendra le contrôle de Mario et commencera à jouer. Asseyez-vous, détendez-vous et observez l'intelligence artificielle en action !
+
+## 🤝 Contributing
+
+1. Fork the repository.
+2. Create a new branch for your changes.
+3. Make your changes.
+4. Submit a pull request
