@@ -54,7 +54,7 @@ NB_HIDDEN_PAR_LIGNE = 10
 -- ########## Constantes pour la fitness ##########
 
 -- Valeurs pour le calcul de la fitness
-FITNESS_LEVEL_FINI = 1000
+FITNESS_LEVEL_FINI = 1000000
 NB_FRAME_RESET_BASE = 30
 NB_FRAME_RESET_PROGRES = 350
 NB_NEURONE_MAX = 100000

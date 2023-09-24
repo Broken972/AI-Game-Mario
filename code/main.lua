@@ -118,7 +118,7 @@ else
 								sauvegarderPopulation(laPopulation, true)
 								niveauFiniSauvegarde = true
 								console.log("Niveau fini apres " .. nbGeneration .. " generation !")
-								niveauReussi()
+								break
 							end
 						end
 					end
