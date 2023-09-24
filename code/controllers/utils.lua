@@ -9,7 +9,7 @@ end
 function sauvegarderPopulation(laPopulation, estFini)
 	chemin = getNomFichierSauvegarde()
 	if estFini then
-		chemin = "FINI " .. chemin
+		chemin = "FINI mettre le chemin du level" .. chemin
 	end
 
 	local fichier = io.open(chemin, "w+")
@@ -171,4 +171,10 @@ function activerChargement()
 			lancerNiveau()
 		end
 	end
+end
+
+function niveauReussi()
+	console.log("Le niveau est réussi ! Arrêt du script.")
+	terminerScript() -- Nettoyez avant de quitter.
+	os.exit()
 end

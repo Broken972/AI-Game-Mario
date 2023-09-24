@@ -17,6 +17,8 @@ event.onexit(function()
 	forms.destroy(form)
 end)
 
+event.onexit(terminerScript)
+
 
 console.clear()
 -- petit check pour voir si c'est bien la bonne rom
@@ -116,6 +118,7 @@ else
 								sauvegarderPopulation(laPopulation, true)
 								niveauFiniSauvegarde = true
 								console.log("Niveau fini apres " .. nbGeneration .. " generation !")
+								niveauReussi()
 							end
 						end
 					end
