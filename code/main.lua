@@ -1,61 +1,64 @@
--- Loading modules
+-- Chargement des modules
+local connection = require("./controllers/connection")
 local constante = require("./controllers/constante")
-local population = require("./controllers/population")
-local neurone = require("./controllers/neurone")
-local connexion = require("./controllers/connexion")
-local reseau = require("./controllers/reseau")
-local espece = require("./controllers/espece")
-local utils = require("./controllers/utils")
-local affichage = require("./controllers/affichage")
+local display = require("./controllers/display")
+local event_handlers = require("./controllers/event_handlers")
+local game_logic = require("./controllers/game_logic")
 local interaction = require("./controllers/interaction")
+local network_manager = require("./controllers/network_manager")
+local network = require("./controllers/network")
+local neuron = require("./controllers/neuron")
 local panel = require("./controllers/panel")
+local population = require("./controllers/population")
+local species = require("./controllers/species")
+local ui_manager = require("./controllers/ui_manager")
+local utils = require("./controllers/utils")
 
-
+-- Gère la fermeture du script
 event.onexit(function()
-	console.log("Fin du script")
-	gui.clearGraphics()
-	forms.destroy(form)
+	console.log("Fin du script")  -- Affiche un message lors de la fin du script
+	gui.clearGraphics()  -- Nettoie les graphiques de l'interface utilisateur
+	forms.destroy(form)  -- Détruit le formulaire (fenêtre)
 end)
 
-event.onexit(terminerScript)
+event.onexit(terminerScript)  -- Appel d'une fonction de nettoyage supplémentaire lors de la fermeture
 
+console.clear()  -- Nettoie la console
 
-console.clear()
--- petit check pour voir si c'est bien la bonne rom
+-- Vérifie si la ROM du jeu est correcte
 if gameinfo.getromname() ~= NOM_JEU then
 	console.log("mauvaise rom (actuellement " .. gameinfo.getromname() .. "), marche uniquement avec " .. nomJeu)
 else
 	console.log("lancement du script")
-	math.randomseed(os.time())
+	math.randomseed(os.time())  -- Initialise le générateur de nombres aléatoires
 	
-	lancerNiveau()
+	lancerNiveau()  -- Démarre un niveau du jeu
 
-	form = forms.newform(TAILLE_FORM_W, TAILLE_FORM_H, "Informations")
+	form = forms.newform(TAILLE_FORM_W, TAILLE_FORM_H, "Informations")  -- Crée une nouvelle fenêtre/formulaire
 	
-	initializeUI()
+	initializeUI()  -- Initialise l'interface utilisateur
 
-	laPopulation = newPopulation() 
+	laPopulation = newPopulation()  -- Crée une nouvelle population
 	
 	for i = 1, #laPopulation, 1 do
-		mutation(laPopulation[i])
+		mutation(laPopulation[i])  -- Applique des mutations aux individus de la population
 	end	
 
 	for i = 2, #laPopulation, 1 do
-		laPopulation[i] = copier(laPopulation[1])
+		laPopulation[i] = copier(laPopulation[1])  -- Copie et applique des mutations aux individus
 		mutation(laPopulation[i])
 	end	
 
-	lesEspeces = trierPopulation(laPopulation)
-	laPopulation = nouvelleGeneration(laPopulation, lesEspeces)
+	lesEspeces = trierPopulation(laPopulation)  -- Trie la population en espèces
+	laPopulation = nouvelleGeneration(laPopulation, lesEspeces)  -- Crée une nouvelle génération de la population
 
-	-- boucle principale 
+	-- Boucle principale
 	while true do
 		
-		-- ça va permettre de suivre si pendant cette frame il y a du l'evolution
-		local fitnessAvant = laPopulation[idPopulation].fitness
-		nettoyer = true
+		local fitnessAvant = laPopulation[idPopulation].fitness  -- Fitness de l'individu avant la mise à jour
+		nettoyer = true  -- Indicateur pour nettoyer les graphiques
 
-
+		-- Gestion de l'accélération du jeu et de l'affichage
 		if forms.ischecked(estAccelere) then
 			emu.limitframerate(false)
 		else
@@ -63,39 +66,37 @@ else
 		end
 
 		if forms.ischecked(estAfficheReseau) then
-			dessinerUnReseau(laPopulation[idPopulation])
+			dessinerUnReseau(laPopulation[idPopulation])  -- Dessine le réseau de neurones
 			nettoyer = false
 		end
 
 		if forms.ischecked(estAfficheInfo) then
-			dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
+			dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)  -- Dessine les informations sur la population et les espèces
 			nettoyer = false
 		end
 
-
-
 		if nettoyer then
-			gui.clearGraphics()
+			gui.clearGraphics()  -- Nettoie les graphiques si nécessaire
 		end
 
-
+		-- Mise à jour du réseau de neurones et application des commandes
 		majReseau(laPopulation[idPopulation], marioBase)
 		feedForward(laPopulation[idPopulation])
 		appliquerLesBoutons(laPopulation[idPopulation])
 
-		
+		-- Gestion de la fitness et des générations
 		if nbFrame == 0 then
 			fitnessInit = laPopulation[idPopulation].fitness
 		end
 
-		emu.frameadvance()
+		emu.frameadvance()  -- Avance d'une frame dans l'émulateur
 		nbFrame = nbFrame + 1
 
-
 		if fitnessMax < laPopulation[idPopulation].fitness then
-			fitnessMax = laPopulation[idPopulation].fitness
+			fitnessMax = laPopulation[idPopulation].fitness  -- Mise à jour de la fitness maximale
 		end
 
+		-- Réinitialisation et gestion des générations
 		-- si pas d'évolution ET que le jeu n'est pas en pause, on va voir si on reset ou pas
 		if fitnessAvant == laPopulation[idPopulation].fitness and memory.readbyte(0x13D4) == 0 then
 			nbFrameStop = nbFrameStop + 1
@@ -134,7 +135,7 @@ else
 			nbFrameStop = 0
 		end
 
-		-- maj du label actuel
+		-- Mise à jour de l'affichage des informations
 		local str = "generation " .. nbGeneration .. " Fitness maximal: " .. 
 						fitnessMax .. "\nInformations sur l'individu actuel:\n" .. 
 						"id: " .. idPopulation .. "/" .. #laPopulation .." neurones: " .. 
