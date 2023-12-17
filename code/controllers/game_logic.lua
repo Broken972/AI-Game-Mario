@@ -135,3 +135,9 @@ function majReseau(unReseau, marioBase)
 		unReseau.lesNeurones[i].valeur = lesInputs[i]
 	end
 end
+
+function niveauReussi()
+	console.log("Le niveau est réussi ! Arrêt du script.")
+	terminerScript() -- Nettoyez avant de quitter.
+	os.exit()
+end

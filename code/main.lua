@@ -12,16 +12,11 @@ local species = require("./controllers/species")
 local ui_manager = require("./controllers/ui_manager")
 local utils = require("./controllers/utils")
 
--- Gère la fermeture du script
-event.onexit(function()
-	console.log("Fin du script")  -- Affiche un message lors de la fin du script
-	gui.clearGraphics()  -- Nettoie les graphiques de l'interface utilisateur
-	forms.destroy(form)  -- Détruit le formulaire (fenêtre)
-end)
-
 event.onexit(terminerScript)  -- Appel d'une fonction de nettoyage supplémentaire lors de la fermeture
 
 console.clear()  -- Nettoie la console
+
+
 
 -- Vérifie si la ROM du jeu est correcte
 if gameinfo.getromname() ~= NOM_JEU then
