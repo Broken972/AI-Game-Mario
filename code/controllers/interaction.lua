@@ -1,43 +1,3 @@
--- renvoie l'indice du tableau lesInputs avec les coordonnées x y, peut être utilisé aussi pour acceder aux inputs du réseau de neurone
-function getIndiceLesInputs(x, y)
-	return x + ((y-1) * NB_TILE_W)
-end
-
--- renvoie les inputs, sont créées en fonction d'où est mario
-function getLesInputs()
-	local lesInputs = {}
-	for i = 1, NB_TILE_W, 1 do
-		for j = 1, NB_TILE_H, 1 do
-			lesInputs[getIndiceLesInputs(i, j)] = 0
-		end
-	end
-	
-	local lesSprites = getLesSprites()
-	for i = 1, #lesSprites, 1 do
-		local input = convertirPositionPourInput(getLesSprites()[i])
-		if input.x > 0 and input.x < (TAILLE_VUE_W / TAILLE_TILE) + 1  then
-			lesInputs[getIndiceLesInputs(input.x, input.y)] = -1
-		end
-	end
-
-	
-
-	local lesTiles = getLesTiles()
-	for i = 1, NB_TILE_W, 1 do
-		for j = 1, NB_TILE_H, 1 do
-			local indice = getIndiceLesInputs(i, j)
-			if lesTiles[indice] ~= 0 then
-				lesInputs[indice] = lesTiles[indice]
-			end
-		end
-	end
-
-
-	return lesInputs
-end
-
-
-
 -- retourne une liste de taille 10 max de la position (x, y) des sprites à l'écran. (sprite = mechant truc)
 function getLesSprites()
 	local lesSprites = {}
@@ -64,9 +24,6 @@ function getLesSprites()
 
 	return lesSprites
 end
-
-
-
 
 -- renvoie une table qui a la meme taille que lesInputs. On y accède de la meme façon
 function getLesTiles()
@@ -103,9 +60,6 @@ function getLesTiles()
 	return lesTiles
 end
 
-
-
-
 -- retourne la position de mario (x, y)
 function getPositionMario()
 	local mario = {} 
@@ -113,9 +67,6 @@ function getPositionMario()
 	mario.y = memory.read_s16_le(0x96)
 	return mario
 end
-
-
-
 
 -- retourne la position de la camera (x, y)
 function getPositionCamera()
@@ -128,49 +79,3 @@ end
 
 
 
--- permet de convertir une position pour avoir les arguments x et y du tableau lesInputs
-function convertirPositionPourInput(position)
-	local mario = getPositionMario()
-	local positionT = {}
-	mario.x = mario.x - TAILLE_VUE_W / 2
-	mario.y = mario.y - TAILLE_VUE_H / 2
-
-	positionT.x = math.floor((position.x - mario.x) / TAILLE_TILE) + 1
-	positionT.y = math.floor((position.y - mario.y) / TAILLE_TILE) + 1
-
-	return positionT
-end
-
-
--- applique les boutons aux joypad de l'emulateur avec un reseau de neurone
-function appliquerLesBoutons(unReseau)
-	local lesBoutonsT = {}
-	for i = 1, NB_OUTPUT, 1 do
-		lesBoutonsT[lesBoutons[i].nom] = sigmoid(unReseau.lesNeurones[NB_INPUT + i].valeur)
-	end
-
-	-- c'est pour que droit est la prio sur la gauche
-	if lesBoutonsT["P1 Left"] and lesBoutonsT["P1 Right"] then
-		lesBoutonsT["P1 Left"] = false
-	end
-	joypad.set(lesBoutonsT)
-end
-
-
-function traitementPause()
-	local lesBoutons = joypad.get(1)
-	if lesBoutons["P1 Start"] then
-		lesBoutons["P1 Start"] = false
-	else
-		lesBoutons["P1 Start"] = true
-	end
-	joypad.set(lesBoutons)
-end
-
--- relance le niveau et reset tout pour le nouvel individu
-function lancerNiveau()
-	savestate.load(NOM_SAVESTATE)
-	marioBase = getPositionMario()
-	niveauFini = false
-	nbFrameStop = 0
-end

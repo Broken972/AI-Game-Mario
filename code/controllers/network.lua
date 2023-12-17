@@ -1,3 +1,50 @@
+-- Crée un nouveau neurone
+function newNeurone()
+    local neurone = {}
+    
+    neurone.valeur = 0         -- Valeur initiale du neurone
+    neurone.id = 0             -- Identifiant non initialisé si égal à 0, doit être égal à l'indice du neurone dans lesNeurones du réseau
+    neurone.type = ""          -- Type de neurone (input, hidden, output), doit être défini plus tard
+    
+    return neurone
+end
+
+-- applique les boutons aux joypad de l'emulateur avec un reseau de neurone
+function appliquerLesBoutons(unReseau)
+	local lesBoutonsT = {}
+	for i = 1, NB_OUTPUT, 1 do
+		lesBoutonsT[lesBoutons[i].nom] = sigmoid(unReseau.lesNeurones[NB_INPUT + i].valeur)
+	end
+
+	-- c'est pour que droit est la prio sur la gauche
+	if lesBoutonsT["P1 Left"] and lesBoutonsT["P1 Right"] then
+		lesBoutonsT["P1 Left"] = false
+	end
+	joypad.set(lesBoutonsT)
+end
+
+-- Ajoute une connexion à un réseau de neurones
+function ajouterConnexion(unReseau, entree, sortie, poids)
+    -- Vérifie si les neurones de la connexion existent bien
+    if unReseau.lesNeurones[entree].id == 0 then
+        console.log("La connexion avec l'entrée " .. entree .. " n'est pas initialisée ?")
+        return
+    end
+    if unReseau.lesNeurones[sortie].id == 0 then
+        console.log("La connexion avec la sortie " .. sortie .. " n'est pas initialisée ?")
+        return
+    end
+    
+    local connexion = newConnexion()
+    connexion.actif = true
+    connexion.entree = entree
+    connexion.sortie = sortie
+    connexion.poids = genererPoids()
+    connexion.innovation = nbInnovation
+    table.insert(unReseau.lesConnexions, connexion)
+    nbInnovation = nbInnovation + 1
+end
+
 -- Crée un nouveau réseau de neurones
 function newReseau()
     local reseau = {
@@ -21,25 +68,6 @@ function newReseau()
     return reseau
 end
 
--- Copie une structure de données et renvoie la copie
--- Le code original provient de http://lua-users.org/wiki/CopyTable
-function copier(orig)
-    local orig_type = type(orig)
-    local copie
-
-    if orig_type == 'table' then
-        copie = {}
-        for orig_key, orig_value in next, orig, nil do
-            copie[copier(orig_key)] = copier(orig_value)
-        end
-        setmetatable(copie, copier(getmetatable(orig)))
-    else -- number, string, boolean, etc
-        copie = orig
-    end
-
-    return copie
-end
-
 -- Modifie les connexions d'un réseau de neurones
 function mutationPoidsConnexions(unReseau)
     for i = 1, #unReseau.lesConnexions, 1 do
@@ -52,26 +80,6 @@ function mutationPoidsConnexions(unReseau)
                 connexion.poids = connexion.poids + ajustement
             end
         end
-    end
-end
-
--- Appelle une des mutations aléatoirement en fonction des constantes
-function mutation(unReseau)
-    local random = math.random()
-    
-    -- Mutation des poids des connexions en fonction de CHANCE_MUTATION_POIDS
-    if random < CHANCE_MUTATION_POIDS then
-        mutationPoidsConnexions(unReseau)
-    end
-    
-    -- Ajout d'une connexion en fonction de CHANCE_MUTATION_CONNEXION
-    if random < CHANCE_MUTATION_CONNEXION then
-        mutationAjouterConnexion(unReseau)
-    end
-    
-    -- Ajout d'un neurone en fonction de CHANCE_MUTATION_NEURONE
-    if random < CHANCE_MUTATION_NEURONE then
-        mutationAjouterNeurone(unReseau)
     end
 end
 
@@ -97,10 +105,6 @@ function getDiffPoids(unReseau1, unReseau2)
     return total / nbConnexion
 end
 
-
-
-
-
 -- Retourne le nombre de connexions qui n'ont aucun rapport entre les 2 réseaux
 function getDisjoint(unReseau1, unReseau2)
     local nbPareil = 0
@@ -115,39 +119,6 @@ function getDisjoint(unReseau1, unReseau2)
     -- Retourne le nombre total de connexions disjointes
     return #unReseau1.lesConnexions + #unReseau2.lesConnexions - 2 * nbPareil
 end
-
-
-
-
--- permet d'obtenir le score d'un reseau de neurone, ce qui va le mettre dans une especes
--- rien à voir avec le fitness 
--- unReseauRep et un reseau appartenant deja a une espece 
--- et reseauTest et le reseau qui va etre testé
-function getScore(unReseauTest, unReseauRep)
-	return (EXCES_COEF * getDisjoint(unReseauTest, unReseauRep)) / 
-		(math.max(#unReseauTest.lesConnexions + #unReseauRep.lesConnexions, 1))
-		+ POIDSDIFF_COEF * getDiffPoids(unReseauTest, unReseauRep)
-end
-
--- genere un poids aléatoire (pour les connexions) egal à 1 ou -1
-function genererPoids()
-	local var = 1
-	if math.random() >= 0.5 then
-		var = var * -1
-	end
-	return var
-end
-
-
--- fonction d'activation
-function sigmoid(x)
-	local resultat = x / (1 + math.abs(x))
-	if resultat >= 0.5 then
-		return true
-	end
-	return false
-end
-
 
 -- applique les connexions d'un réseau de neurone en modifiant la valeur des neurones de sortie
 function feedForward(unReseau)
@@ -178,172 +149,57 @@ function feedForward(unReseau)
 	end
 end
 
-
-
-
--- Fonction pour effectuer un croisement entre deux réseaux de neurones
-function crossover(unReseau1, unReseau2)
-    local leReseau = newReseau()
-
-    -- Quel est le meilleur des deux ?
-    local leBon, leNul
-
-    -- Comparaison des valeurs de fitness pour déterminer le meilleur réseau
-    if unReseau1.fitness > unReseau2.fitness then
-        leBon = unReseau1
-        leNul = unReseau2
-    else
-        leBon = unReseau2
-        leNul = unReseau1
+-- Ajoute un neurone à un réseau de neurones, utilisé seulement pour les neurones qui doivent exister
+function ajouterNeurone(unReseau, id, type, valeur)
+    if id == 0 then
+        console.log("La fonction ajouterNeurone ne doit pas être utilisée avec un id == 0")
+        return
     end
 
-    -- Le nouveau réseau hérite de la majorité des attributs du meilleur
-    leReseau = copier(leBon)
+    local neurone = newNeurone()
+    neurone.id = id
+    neurone.type = type
+    neurone.valeur = valeur
+    table.insert(unReseau.lesNeurones, neurone)
+end
 
-    -- Sauf pour les connexions où il y a une chance que le nul lui donne ses gènes
-    for i = 1, #leReseau.lesConnexions do
-        for j = 1, #leNul.lesConnexions do
-            -- Si deux connexions partagent la même innovation et que le nul est actif,
-            -- il y a une chance que la connexion du nul vienne remplacer celle du bon
-            local memeInnovation = leReseau.lesConnexions[i].innovation == leNul.lesConnexions[j].innovation
-            local nulActif = leNul.lesConnexions[j].actif
+-- Ajoute un neurone (couche cachée uniquement) entre 2 neurones déjà connectés. Ne peut pas marcher
+-- si il n'y a pas de connexion 
+function mutationAjouterNeurone(unReseau)
+    if #unReseau.lesConnexions == 0 then
+        console.log("Impossible d'ajouter un neurone entre 2 connexions si pas de connexion")
+        return nil
+    end
+    
+    if unReseau.nbNeurone == NB_NEURONE_MAX then
+        console.log("Nombre de neurone max atteint")
+        return nil
+    end
 
-            if memeInnovation and nulActif then
-                if math.random() > 0.5 then
-                    leReseau.lesConnexions[i] = leNul.lesConnexions[j]
-                end
-            end
+    -- Randomisation de la liste des connexions
+    local listeRandom = {}
+    for i = 1, #unReseau.lesConnexions do
+        local pos = math.random(1, #listeRandom + 1)
+        table.insert(listeRandom, pos, i)
+    end
+
+    for _, indice in ipairs(listeRandom) do
+        local connexion = unReseau.lesConnexions[indice]
+        if connexion.actif then
+            -- Désactive la connexion existante
+            connexion.actif = false
+
+            -- Ajoute un nouveau neurone caché
+            unReseau.nbNeurone = unReseau.nbNeurone + 1
+            local indiceNeurone = unReseau.nbNeurone + NB_INPUT + NB_OUTPUT
+            ajouterNeurone(unReseau, indiceNeurone, "hidden", 1)
+
+            -- Ajoute deux nouvelles connexions
+            ajouterConnexion(unReseau, connexion.entree, indiceNeurone, genererPoids())
+            ajouterConnexion(unReseau, indiceNeurone, connexion.sortie, genererPoids())
+
+            break
         end
     end
-
-    -- Réinitialisation de la valeur fitness du nouveau réseau
-    leReseau.fitness = 1
-    return leReseau
 end
 
--- mets à jour un réseau de neurone avec ce qu'il y a a l'écran. A appeler à chaque frame quand on en test un reseau
-function majReseau(unReseau, marioBase)
-	local mario = getPositionMario()
-	
-
-	-- niveau fini ?
-	if not niveauFini and memory.readbyte(0x0100) == 12 then
-		unReseau.fitness = FITNESS_LEVEL_FINI -- comme ça l'espece de cette population va dominer les autres
-		niveauFini = true
-	-- sinon augmentation de la fitness classique (quand mario va à gauche)
-	elseif marioBase.x < mario.x then
-		unReseau.fitness = unReseau.fitness + (mario.x - marioBase.x)
-		marioBase.x = mario.x
-	end
-
-	-- mise à jour des inputs
-	lesInputs = getLesInputs()
-	for i = 1, NB_INPUT, 1 do
-		unReseau.lesNeurones[i].valeur = lesInputs[i]
-	end
-end
-
-
-function dessinerUnReseau(unReseau)
-	-- je commence par les inputs
-	local lesInputs = getLesInputs()
-	local camera = getPositionCamera()
-	local lesPositions = {} -- va retenir toutes les positions des neurones affichées, ça sera plus facile pour les connexions
-	
-	for i = 1, NB_TILE_W, 1 do
-		for j = 1, NB_TILE_H, 1 do
-			local indice = getIndiceLesInputs(i, j)
-
-			-- le i - 1 et j - 1 c'est juste pour afficher les cases à la position x, y quand ils sont == 0
-			local xT = ENCRAGE_X_INPUT + (i - 1) * TAILLE_INPUT
-			local yT = ENCRAGE_Y_INPUT + (j - 1) * TAILLE_INPUT
-			
-			
-			local couleurFond = "gray"
-			if unReseau.lesNeurones[indice].valeur < 0 then
-				couleurFond = "black"
-			elseif unReseau.lesNeurones[indice].valeur > 0 then
-				couleurFond = "white"
-			end
-			
-			gui.drawRectangle(xT, yT, TAILLE_INPUT, TAILLE_INPUT, "black", couleurFond)
-
-			lesPositions[indice] = {}
-			lesPositions[indice].x = xT + TAILLE_INPUT / 2
-			lesPositions[indice].y = yT + TAILLE_INPUT / 2
-		end
-	end
-
-
-
-	-- affichage du MARIO sur la grille, MARIO N'EST PAS UNE INPUT OUI C'EST POUR FAIRE JOLIE
-	local mario = convertirPositionPourInput(getPositionMario())
-
-	-- je respecte la meme regle qu'au dessus
-	mario.x = (mario.x - 1) * TAILLE_INPUT + ENCRAGE_X_INPUT
-	mario.y = (mario.y - 1) * TAILLE_INPUT + ENCRAGE_Y_INPUT
-	-- mario est 2 fois plus grand que les autres sprites, car sa position est celle qu'il a quand il est grand
-	gui.drawRectangle(mario.x, mario.y, TAILLE_INPUT, TAILLE_INPUT * 2, "black", "blue")
-
-	for i = 1, NB_OUTPUT, 1 do
-		local xT = ENCRAGE_X_OUTPUT
-		local yT = ENCRAGE_Y_OUTPUT + ESPACE_Y_OUTPUT * (i - 1)
-		local nomT = string.sub(lesBoutons[i].nom, 4)
-		local indice = i + NB_INPUT
-
-		if sigmoid(unReseau.lesNeurones[indice].valeur) then
-			gui.drawRectangle(xT, yT, TAILLE_OUTPUT_W, TAILLE_OUTPUT_H, "white", "white")
-		else
-			gui.drawRectangle(xT, yT, TAILLE_OUTPUT_W, TAILLE_OUTPUT_H, "white", "black")
-		end
-		
-		xT = xT + TAILLE_OUTPUT_W
-		local strValeur = string.format("%.2f", unReseau.lesNeurones[indice].valeur)
-		--c'est pour afficher la valeur de l'input stv
-		gui.drawText(xT, yT-1, nomT -- .. "(" .. strValeur .. ")" -- 
-						, "white", "black", 10)
-		lesPositions[indice] = {}
-		lesPositions[indice].x = xT - TAILLE_OUTPUT_W / 2
-		lesPositions[indice].y = yT + TAILLE_OUTPUT_H / 2
-	end
-
-	for i = 1, unReseau.nbNeurone, 1 do
-		local xT = ENCRAGE_X_HIDDEN + (TAILLE_HIDDEN + 1) * (i - (NB_HIDDEN_PAR_LIGNE * math.floor((i-1) / NB_HIDDEN_PAR_LIGNE)))
-		local yT = ENCRAGE_Y_HIDDEN + (TAILLE_HIDDEN + 1) * (math.floor((i-1) / NB_HIDDEN_PAR_LIGNE))
-		-- tous les 10 j'affiche le restant des neuroens en dessous
-
-		local indice = i + NB_INPUT + NB_OUTPUT
-		gui.drawRectangle(xT, yT, TAILLE_HIDDEN, TAILLE_HIDDEN, "black", "white")
-
-		lesPositions[indice] = {}
-		lesPositions[indice].x = xT + TAILLE_HIDDEN / 2
-		lesPositions[indice].y = yT + TAILLE_HIDDEN / 2
-	end
-
-
-
-
-	-- affichage des connexions 
-	for i = 1, #unReseau.lesConnexions, 1 do
-		if unReseau.lesConnexions[i].actif then
-			local pixel = 0
-			local alpha = 255
-			local couleur
-			if unReseau.lesConnexions[i].poids > 0 then
-				pixel = 255
-			end
-
-			if not unReseau.lesConnexions[i].allume then
-				alpha = 25
-			end
-
-			couleur = forms.createcolor(pixel, pixel, pixel, alpha)
-
-			gui.drawLine(lesPositions[unReseau.lesConnexions[i].entree].x, 
-						  lesPositions[unReseau.lesConnexions[i].entree].y, 
-						  lesPositions[unReseau.lesConnexions[i].sortie].x, 
-						  lesPositions[unReseau.lesConnexions[i].sortie].y, 
-						  couleur)
-		end
-	end
-end

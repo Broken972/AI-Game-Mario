@@ -1,177 +1,63 @@
-function getNomFichierSauvegarde()
-	local str = NOM_FICHIER_POPULATION 
-	str = string.gsub(str, "IDGeneration", nbGeneration)
-	return str
+function resetFitnessMax()
+    fitnessMax = 0
 end
 
--- sauvegarde la population actuelle dans le fichier getNomFichierSauvegarde()
--- le dernier argument est reservé si le script detect que la population a terminée le niveau
-function sauvegarderPopulation(laPopulation, estFini)
-	chemin = getNomFichierSauvegarde()
-	if estFini then
-		chemin = "FINI mettre le chemin du level" .. chemin
-	end
+-- Copie une structure de données et renvoie la copie
+-- Le code original provient de http://lua-users.org/wiki/CopyTable
+function copier(orig)
+    local orig_type = type(orig)
+    local copie
 
-	local fichier = io.open(chemin, "w+")
-	io.output(fichier)
+    if orig_type == 'table' then
+        copie = {}
+        for orig_key, orig_value in next, orig, nil do
+            copie[copier(orig_key)] = copier(orig_value)
+        end
+        setmetatable(copie, copier(getmetatable(orig)))
+    else -- number, string, boolean, etc
+        copie = orig
+    end
 
-	-- sauvegarde classique de la population
-	io.write(nbGeneration .. "\n")
-	io.write(nbInnovation .. "\n")
-	for i = 1, #laPopulation, 1 do
-		sauvegarderUnReseau(laPopulation[i], fichier)
-	end
-
-	-- et là je sauvegarde le plus fort, c'est important pour pas perdre les progrés
-	local lePlusFort = newReseau()
-	for i = 1, #laPopulation, 1 do
-		if lePlusFort.fitness < laPopulation[i].fitness then
-			lePlusFort = copier(laPopulation[i])
-		end
-	end
-	-- check aussi dans l'ancienne population (si plus fort, il ne peut etre que là)
-	if #lesAnciennesPopulation > 0 then
-		for i = 1, #lesAnciennesPopulation, 1 do
-			for j = 1, #lesAnciennesPopulation[i], 1 do
-				if lePlusFort.fitness < lesAnciennesPopulation[i][j].fitness then
-					lePlusFort = copier(lesAnciennesPopulation[i][j])
-				end
-			end
-		end
-	end
-	sauvegarderUnReseau(lePlusFort, fichier)
-	io.close(fichier)
-
-	console.log("sauvegarde terminee au fichier " .. chemin)
+    return copie
 end
 
--- charge la population sauvegardé
--- renvoie la nouvelle population ou nil si le chemin n'est pas celui d'un fichier pop
-function chargerPopulation(chemin)
-	-- petit test pour voir si le fichier est ok
-	local test = string.find(chemin, ".pop")
-	local laPopulation = nil
-	if test == nil then
-		console.log("le fichier " .. chemin .. " n'est pas du bon format (.pop) je vais te monter en l'air ")
-	else 
-		laPopulation = {}
-		local fichier = io.open(chemin, "r")
-	
-		io.input(fichier)
-
-		local totalNeurone = 0
-		local totalConnexion = 0
-
-		nbGeneration = io.read("*number") 
-		nbInnovation = io.read("*number")
-		for i = 1, NB_INDIVIDU_POPULATION, 1 do
-			table.insert(laPopulation, chargerUnReseau(fichier))
-			laPopulation[i].fitness = 1
-		end
-	
-		lesAnciennesPopulation = {} -- obligé !
-		-- en mettant le plus fort ici, i lsera forcement lu dans nouvelleGeneration
-		table.insert(lesAnciennesPopulation, copier(laPopulation))
-		lesAnciennesPopulation[1][1] = chargerUnReseau(fichier)
-
-		console.log("plus fort charge")
-		console.log(lesAnciennesPopulation[1][1])
-		-- si le plus fort a fini le niveau, tous les individus de la population deviennent le plus fort
-		if lesAnciennesPopulation[1][1].fitness == FITNESS_LEVEL_FINI then
-			for i = 1, NB_INDIVIDU_POPULATION, 1 do
-				laPopulation[i] = copier(lesAnciennesPopulation[1][1])
-			end
-		end
-		io.close(fichier)
-		console.log("chargement termine de " .. chemin)
+-- fonction d'activation
+function sigmoid(x)
+	local resultat = x / (1 + math.abs(x))
+	if resultat >= 0.5 then
+		return true
 	end
-
-	return laPopulation
+	return false
 end
 
--- sauvegarde un seul reseau
-function sauvegarderUnReseau(unReseau, fichier)
-	io.write(unReseau.nbNeurone .. "\n")
-	io.write(#unReseau.lesConnexions .. "\n")
-	io.write(unReseau.fitness .. "\n")
-	for i = 1, unReseau.nbNeurone, 1 do
-		local indice = NB_INPUT + NB_OUTPUT + i
-		-- pas besoin d'écrire le type, je ne sauvegarde que les hiddens
-		-- *non plus la valeur, car c'est reset toutes les frames en fait
-		io.write(unReseau.lesNeurones[indice].id .. "\n")
+-- genere un poids aléatoire (pour les connexions) egal à 1 ou -1
+function genererPoids()
+	local var = 1
+	if math.random() >= 0.5 then
+		var = var * -1
 	end
-	for i = 1, #unReseau.lesConnexions, 1 do
-		-- obligé car actif est un bool
-		local actif = 1 
-		if unReseau.lesConnexions[i].actif ~= true then
-			actif = 0
-		end
-		io.write(actif .. "\n" .. 
-			unReseau.lesConnexions[i].entree .. "\n" ..
-			unReseau.lesConnexions[i].sortie .. "\n" .. 
-			unReseau.lesConnexions[i].poids .. "\n" .. 
-			unReseau.lesConnexions[i].innovation .. "\n")
-	end
+	return var
+end
+
+-- renvoie l'indice du tableau lesInputs avec les coordonnées x y, peut être utilisé aussi pour acceder aux inputs du réseau de neurone
+function getIndiceLesInputs(x, y)
+	return x + ((y-1) * NB_TILE_W)
+end
+
+-- permet de convertir une position pour avoir les arguments x et y du tableau lesInputs
+function convertirPositionPourInput(position)
+	local mario = getPositionMario()
+	local positionT = {}
+	mario.x = mario.x - TAILLE_VUE_W / 2
+	mario.y = mario.y - TAILLE_VUE_H / 2
+
+	positionT.x = math.floor((position.x - mario.x) / TAILLE_TILE) + 1
+	positionT.y = math.floor((position.y - mario.y) / TAILLE_TILE) + 1
+
+	return positionT
 end
 
 
--- charge un seul reseau
-function chargerUnReseau(fichier)
-	local unReseau = newReseau()
-	local nbNeurone = io.read("*number")
-	local nbConnexion = io.read("*number")
-	unReseau.fitness = io.read("*number")
-	unReseau.nbNeurone = nbNeurone
-	unReseau.lesConnexions = {}
-	for i = 1, nbNeurone, 1 do
-		local neurone = newNeurone()
-		neurone.id = io.read("*number")
-		neurone.valeur = 0
-		neurone.type = "hidden"
-		
-		table.insert(unReseau.lesNeurones, neurone)
-	end
-		
-	for i = 1, nbConnexion, 1 do
-		local connexion = newConnexion()
-
-		local actif = io.read("*number")
-		connexion.entree = io.read("*number")
-		connexion.sortie = io.read("*number")
-		connexion.poids = io.read("*number")
-		connexion.innovation = io.read("*number")
-
-		if actif == 1 then
-			connexion.actif = true
-		else
-			connexion.actif = false
-		end
-			
-		table.insert(unReseau.lesConnexions, connexion)
-	end
-
-	return unReseau
-end
-
--- pas le choix de passer comme ça pour activer la sauvegarde
-function activerSauvegarde()
-	sauvegarderPopulation(laPopulation, false)
-end
-
--- pareil pour le chargement
-function activerChargement()
-	chemin = forms.openfile()
-	-- possible que la fenetre soit fermée donc chemin nil
-	if chemin ~= "" then 
-		local laPopulationT = chargerPopulation(chemin)
-		if laPopulationT ~= nil then
-			laPopulation = {}
-			laPopulation = copier(laPopulationT)
-			idPopulation = 1
-			lancerNiveau()
-		end
-	end
-end
 
 function niveauReussi()
 	console.log("Le niveau est réussi ! Arrêt du script.")

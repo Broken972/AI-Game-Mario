@@ -1,3 +1,43 @@
+-- Fonction pour effectuer un croisement entre deux réseaux de neurones
+function crossover(unReseau1, unReseau2)
+    local leReseau = newReseau()
+
+    -- Quel est le meilleur des deux ?
+    local leBon, leNul
+
+    -- Comparaison des valeurs de fitness pour déterminer le meilleur réseau
+    if unReseau1.fitness > unReseau2.fitness then
+        leBon = unReseau1
+        leNul = unReseau2
+    else
+        leBon = unReseau2
+        leNul = unReseau1
+    end
+
+    -- Le nouveau réseau hérite de la majorité des attributs du meilleur
+    leReseau = copier(leBon)
+
+    -- Sauf pour les connexions où il y a une chance que le nul lui donne ses gènes
+    for i = 1, #leReseau.lesConnexions do
+        for j = 1, #leNul.lesConnexions do
+            -- Si deux connexions partagent la même innovation et que le nul est actif,
+            -- il y a une chance que la connexion du nul vienne remplacer celle du bon
+            local memeInnovation = leReseau.lesConnexions[i].innovation == leNul.lesConnexions[j].innovation
+            local nulActif = leNul.lesConnexions[j].actif
+
+            if memeInnovation and nulActif then
+                if math.random() > 0.5 then
+                    leReseau.lesConnexions[i] = leNul.lesConnexions[j]
+                end
+            end
+        end
+    end
+
+    -- Réinitialisation de la valeur fitness du nouveau réseau
+    leReseau.fitness = 1
+    return leReseau
+end
+
 -- Crée une nouvelle population avec NB_INDIVIDU_POPULATION réseaux de neurones
 function newPopulation()
     local population = {}
@@ -8,39 +48,6 @@ function newPopulation()
     end
     
     return population
-end
-
--- Trie la population et la renvoie divisée dans un tableau 2D
-function trierPopulation(laPopulation)
-    local lesEspeces = {}
-    table.insert(lesEspeces, newEspece())
-
-    -- La première espèce créée est le dernier élément de la première population
-    -- Ainsi, on a déjà une première espèce créée
-    table.insert(lesEspeces[1].lesReseaux, copier(laPopulation[#laPopulation]))
-
-    for i = 1, #laPopulation - 1, 1 do
-        local trouve = false
-        for j = 1, #lesEspeces, 1 do
-            local indice = math.random(1, #lesEspeces[j].lesReseaux)
-            local rep = lesEspeces[j].lesReseaux[indice]
-            
-            -- L'individu peut être classé
-            if getScore(laPopulation[i], rep) < DIFF_LIMITE then
-                table.insert(lesEspeces[j].lesReseaux, copier(laPopulation[i]))
-                trouve = true
-                break
-            end
-        end
-
-        -- Si l'individu n'a pas été trouvé, il faut créer une espèce pour cet individu
-        if trouve == false then
-            table.insert(lesEspeces, newEspece())
-            table.insert(lesEspeces[#lesEspeces].lesReseaux, copier(laPopulation[i]))
-        end
-    end
-
-    return lesEspeces
 end
 
 -- Crée une nouvelle génération et renvoie la population créée
@@ -173,37 +180,3 @@ function nouvelleGeneration(laPopulation, lesEspeces)
 	return laNouvellePopulation
 end
 
--- Fonction pour choisir un parent dans une espèce en fonction de sa fitness
-function choisirParent(uneEspece)
-    -- Vérification si l'espèce est vide
-    if #uneEspece == 0 then
-        print("Erreur : uneEspece vide dans choisirParent")
-        return nil
-    end
-
-    -- Si l'espèce ne contient qu'un seul réseau, on le retourne directement
-    if #uneEspece == 1 then
-        return uneEspece[1]
-    end
-
-    -- Calcul du total des fitness pour tous les réseaux de l'espèce
-    local fitnessTotal = 0
-    for i = 1, #uneEspece do
-        fitnessTotal = fitnessTotal + uneEspece[i].fitness
-    end
-
-    -- Sélection d'un parent en fonction de la proportion de sa fitness par rapport au total
-    local limite = math.random(0, fitnessTotal)
-    local total = 0
-    for i = 1, #uneEspece do
-        total = total + uneEspece[i].fitness
-
-        -- Si la somme des fitness cumulés dépasse la limite, on retourne le réseau qui a fait dépasser la limite
-        if total >= limite then
-            return copier(uneEspece[i])
-        end
-    end
-
-    print("Erreur : impossible de trouver un parent")
-    return nil
-end
