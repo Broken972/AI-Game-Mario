@@ -92,6 +92,7 @@ function lancerNiveau()
 	marioBase = getPositionMario()
 	niveauFini = false
 	nbFrameStop = 0
+
 end
 
 -- Appelle une des mutations aléatoirement en fonction des constantes
@@ -117,8 +118,6 @@ end
 -- mets à jour un réseau de neurone avec ce qu'il y a a l'écran. A appeler à chaque frame quand on en test un reseau
 function majReseau(unReseau, marioBase)
 	local mario = getPositionMario()
-	
-
 	-- niveau fini ?
 	if not niveauFini and memory.readbyte(0x0100) == 12 then
 		unReseau.fitness = FITNESS_LEVEL_FINI -- comme ça l'espece de cette population va dominer les autres
@@ -140,6 +139,7 @@ function niveauReussi()
 	console.log("Le niveau est réussi ! Arrêt du script.")
 	terminerScript() -- Nettoyez avant de quitter.
 	os.exit()
+
 end
 
 function miseAJour()
@@ -150,7 +150,7 @@ end
 
 function gererGeneration()
     fitnessAvant = laPopulation[idPopulation].fitness
-
+    
     -- Gestion de la fitness et des générations
     if nbFrame == 0 then
         fitnessInit = laPopulation[idPopulation].fitness
@@ -169,7 +169,9 @@ function gererGeneration()
 
         if nbFrameStop > nbFrameReset then
             nbFrameStop = 0
+
             lancerNiveau()
+
             idPopulation = idPopulation + 1
 
             if idPopulation > #laPopulation then

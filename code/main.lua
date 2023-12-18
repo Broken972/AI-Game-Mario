@@ -42,6 +42,4 @@ if initialiser() then
         
     end
 
-    
-
 end
