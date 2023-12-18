@@ -1,8 +1,10 @@
 -- Traite l'événement de pause en inversant l'état actuel du bouton "Start"
 function traitementPause()
+	-- Obtention de l'état actuel des boutons du joueur 1
     local lesBoutons = joypad.get(1)
     -- Inverse l'état du bouton "Start"
     lesBoutons["P1 Start"] = not lesBoutons["P1 Start"]
+	-- Mise à jour de l'état des boutons
     joypad.set(lesBoutons)
 end
 
