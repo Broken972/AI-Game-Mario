@@ -17,7 +17,7 @@ function initializeUI()
 end
 
 function gererAffichage()
-    local nettoyer = not (forms.ischecked(estAfficheReseau) or forms.ischecked(estAfficheInfo))
+    nettoyer = not (forms.ischecked(estAfficheReseau) or forms.ischecked(estAfficheInfo))
 
     emu.limitframerate(not forms.ischecked(estAccelere))
 
@@ -35,7 +35,7 @@ function gererAffichage()
 end
 
 function afficherInformations()
-    local str = "Génération " .. nbGeneration .. " Fitness maximal: " .. fitnessMax ..
+    str = "Génération " .. nbGeneration .. " Fitness maximal: " .. fitnessMax ..
                 "\nInformations sur l'individu actuel:\n" ..
                 "id: " .. idPopulation .. "/" .. #laPopulation .. 
                 " neurones: " .. #laPopulation[idPopulation].lesNeurones ..

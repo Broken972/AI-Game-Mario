@@ -1,112 +1,95 @@
--- dessine les informations actuelles
+function dessinerUnReseau(unReseau)
+    -- Préparation des variables
+    local lesInputs = getLesInputs()
+    local lesPositions = {}
+
+    -- Dessin des neurones d'entrée
+    for i = 1, NB_TILE_W do
+        for j = 1, NB_TILE_H do
+            local indice = getIndiceLesInputs(i, j)
+            local xT, yT = calculerPosition(i, j, ENCRAGE_X_INPUT, ENCRAGE_Y_INPUT, TAILLE_INPUT)
+            local couleurFond = determinerCouleurFond(unReseau.lesNeurones[indice].valeur)
+            gui.drawRectangle(xT, yT, TAILLE_INPUT, TAILLE_INPUT, "black", couleurFond)
+            lesPositions[indice] = {x = xT + TAILLE_INPUT / 2, y = yT + TAILLE_INPUT / 2}
+        end
+    end
+
+    -- Dessin de Mario pour la visualisation
+    dessinerMario(unReseau)
+
+    -- Dessin des sorties
+    dessinerSorties(unReseau, lesPositions)
+
+    -- Dessin des neurones cachés
+    dessinerNeuronesCaches(unReseau, lesPositions)
+
+    -- Dessin des connexions
+    dessinerConnexions(unReseau, lesPositions)
+end
+
 function dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
 	gui.drawBox(0, 0, 256, 36, "black", "white")
-
-	gui.drawText(0, 4, "Generation " .. nbGeneration .. " Ind:" .. idPopulation .. " nb espece " .. 
-							#lesEspeces .. "\nFitness:" .. 
+	gui.drawText(0, 4, "Génération: " .. nbGeneration .. " Id:" .. idPopulation .. " nbEspece: " .. 
+							#lesEspeces .. "\nDistance:" .. 
 							laPopulation[idPopulation].fitness .. " (max = " .. fitnessMax .. ")", "black")
 end
 
-function dessinerUnReseau(unReseau)
-	-- je commence par les inputs
-	local lesInputs = getLesInputs()
-	local camera = getPositionCamera()
-	local lesPositions = {} -- va retenir toutes les positions des neurones affichées, ça sera plus facile pour les connexions
-	
-	for i = 1, NB_TILE_W, 1 do
-		for j = 1, NB_TILE_H, 1 do
-			local indice = getIndiceLesInputs(i, j)
 
-			-- le i - 1 et j - 1 c'est juste pour afficher les cases à la position x, y quand ils sont == 0
-			local xT = ENCRAGE_X_INPUT + (i - 1) * TAILLE_INPUT
-			local yT = ENCRAGE_Y_INPUT + (j - 1) * TAILLE_INPUT
-			
-			
-			local couleurFond = "gray"
-			if unReseau.lesNeurones[indice].valeur < 0 then
-				couleurFond = "black"
-			elseif unReseau.lesNeurones[indice].valeur > 0 then
-				couleurFond = "white"
-			end
-			
-			gui.drawRectangle(xT, yT, TAILLE_INPUT, TAILLE_INPUT, "black", couleurFond)
+function calculerPosition(i, j, encrageX, encrageY, taille)
+    return encrageX + (i - 1) * taille, encrageY + (j - 1) * taille
+end
 
-			lesPositions[indice] = {}
-			lesPositions[indice].x = xT + TAILLE_INPUT / 2
-			lesPositions[indice].y = yT + TAILLE_INPUT / 2
-		end
-	end
+function determinerCouleurFond(valeur)
+    if valeur < 0 then return "black"
+    elseif valeur > 0 then return "white"
+    else return "gray" end
+end
 
+function dessinerMario(unReseau)
+    local marioPos = convertirPositionPourInput(getPositionMario())
+    local x, y = calculerPosition(marioPos.x, marioPos.y, ENCRAGE_X_INPUT, ENCRAGE_Y_INPUT, TAILLE_INPUT)
+    gui.drawRectangle(x, y, TAILLE_INPUT, TAILLE_INPUT * 2, "black", "blue")
+end
 
+function dessinerSorties(unReseau, lesPositions)
+    for i = 1, NB_OUTPUT do
+        local xT = ENCRAGE_X_OUTPUT
+        local yT = ENCRAGE_Y_OUTPUT + ESPACE_Y_OUTPUT * (i - 1)
+        local nomT = string.sub(lesBoutons[i].nom, 4)
+        local indice = i + NB_INPUT
+        local couleurFond = sigmoid(unReseau.lesNeurones[indice].valeur) and "white" or "black"
+        gui.drawRectangle(xT, yT, TAILLE_OUTPUT_W, TAILLE_OUTPUT_H, "white", couleurFond)
+        
+        local strValeur = string.format("%.2f", unReseau.lesNeurones[indice].valeur)
+        gui.drawText(xT + TAILLE_OUTPUT_W, yT - 1, nomT, "white", "black", 10)
+        
+        lesPositions[indice] = {x = xT + TAILLE_OUTPUT_W / 2, y = yT + TAILLE_OUTPUT_H / 2}
+    end
+end
 
-	-- affichage du MARIO sur la grille, MARIO N'EST PAS UNE INPUT OUI C'EST POUR FAIRE JOLIE
-	local mario = convertirPositionPourInput(getPositionMario())
+function dessinerNeuronesCaches(unReseau, lesPositions)
+    for i = 1, unReseau.nbNeurone do
+        local xT = ENCRAGE_X_HIDDEN + (TAILLE_HIDDEN + 1) * (i - (NB_HIDDEN_PAR_LIGNE * math.floor((i-1) / NB_HIDDEN_PAR_LIGNE)))
+        local yT = ENCRAGE_Y_HIDDEN + (TAILLE_HIDDEN + 1) * math.floor((i-1) / NB_HIDDEN_PAR_LIGNE)
+        local indice = i + NB_INPUT + NB_OUTPUT
+        gui.drawRectangle(xT, yT, TAILLE_HIDDEN, TAILLE_HIDDEN, "black", "white")
+        lesPositions[indice] = {x = xT + TAILLE_HIDDEN / 2, y = yT + TAILLE_HIDDEN / 2}
+    end
+end
 
-	-- je respecte la meme regle qu'au dessus
-	mario.x = (mario.x - 1) * TAILLE_INPUT + ENCRAGE_X_INPUT
-	mario.y = (mario.y - 1) * TAILLE_INPUT + ENCRAGE_Y_INPUT
-	-- mario est 2 fois plus grand que les autres sprites, car sa position est celle qu'il a quand il est grand
-	gui.drawRectangle(mario.x, mario.y, TAILLE_INPUT, TAILLE_INPUT * 2, "black", "blue")
+function dessinerConnexions(unReseau, lesPositions)
+    for _, connexion in ipairs(unReseau.lesConnexions) do
+        if connexion.actif then
+            local couleur = determinerCouleurConnexion(connexion)
+            gui.drawLine(lesPositions[connexion.entree].x, lesPositions[connexion.entree].y, 
+                         lesPositions[connexion.sortie].x, lesPositions[connexion.sortie].y, 
+                         couleur)
+        end
+    end
+end
 
-	for i = 1, NB_OUTPUT, 1 do
-		local xT = ENCRAGE_X_OUTPUT
-		local yT = ENCRAGE_Y_OUTPUT + ESPACE_Y_OUTPUT * (i - 1)
-		local nomT = string.sub(lesBoutons[i].nom, 4)
-		local indice = i + NB_INPUT
-
-		if sigmoid(unReseau.lesNeurones[indice].valeur) then
-			gui.drawRectangle(xT, yT, TAILLE_OUTPUT_W, TAILLE_OUTPUT_H, "white", "white")
-		else
-			gui.drawRectangle(xT, yT, TAILLE_OUTPUT_W, TAILLE_OUTPUT_H, "white", "black")
-		end
-		
-		xT = xT + TAILLE_OUTPUT_W
-		local strValeur = string.format("%.2f", unReseau.lesNeurones[indice].valeur)
-		--c'est pour afficher la valeur de l'input stv
-		gui.drawText(xT, yT-1, nomT -- .. "(" .. strValeur .. ")" -- 
-						, "white", "black", 10)
-		lesPositions[indice] = {}
-		lesPositions[indice].x = xT - TAILLE_OUTPUT_W / 2
-		lesPositions[indice].y = yT + TAILLE_OUTPUT_H / 2
-	end
-
-	for i = 1, unReseau.nbNeurone, 1 do
-		local xT = ENCRAGE_X_HIDDEN + (TAILLE_HIDDEN + 1) * (i - (NB_HIDDEN_PAR_LIGNE * math.floor((i-1) / NB_HIDDEN_PAR_LIGNE)))
-		local yT = ENCRAGE_Y_HIDDEN + (TAILLE_HIDDEN + 1) * (math.floor((i-1) / NB_HIDDEN_PAR_LIGNE))
-		-- tous les 10 j'affiche le restant des neuroens en dessous
-
-		local indice = i + NB_INPUT + NB_OUTPUT
-		gui.drawRectangle(xT, yT, TAILLE_HIDDEN, TAILLE_HIDDEN, "black", "white")
-
-		lesPositions[indice] = {}
-		lesPositions[indice].x = xT + TAILLE_HIDDEN / 2
-		lesPositions[indice].y = yT + TAILLE_HIDDEN / 2
-	end
-
-
-
-
-	-- affichage des connexions 
-	for i = 1, #unReseau.lesConnexions, 1 do
-		if unReseau.lesConnexions[i].actif then
-			local pixel = 0
-			local alpha = 255
-			local couleur
-			if unReseau.lesConnexions[i].poids > 0 then
-				pixel = 255
-			end
-
-			if not unReseau.lesConnexions[i].allume then
-				alpha = 25
-			end
-
-			couleur = forms.createcolor(pixel, pixel, pixel, alpha)
-
-			gui.drawLine(lesPositions[unReseau.lesConnexions[i].entree].x, 
-						  lesPositions[unReseau.lesConnexions[i].entree].y, 
-						  lesPositions[unReseau.lesConnexions[i].sortie].x, 
-						  lesPositions[unReseau.lesConnexions[i].sortie].y, 
-						  couleur)
-		end
-	end
+function determinerCouleurConnexion(connexion)
+    local pixel = connexion.poids > 0 and 255 or 0
+    local alpha = connexion.allume and 255 or 25
+    return forms.createcolor(pixel, pixel, pixel, alpha)
 end
