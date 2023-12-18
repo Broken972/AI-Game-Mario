@@ -39,5 +39,9 @@ if initialiser() then
         gererGeneration()
         afficherInformations()
         emu.frameadvance()
+        
     end
+
+    
+
 end

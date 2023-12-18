@@ -16,6 +16,8 @@ function sauvegarderPopulation(laPopulation, estFini)
     local chemin = getNomFichierSauvegarde()
     if estFini then
         chemin = "Fini" .. chemin
+		-- arreter le script
+		niveauReussi()
     end
 
     local fichier = io.open(chemin, "w+")
