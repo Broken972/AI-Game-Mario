@@ -29,7 +29,7 @@ end
 
 function dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
 	gui.drawBox(0, 0, 256, 36, "black", "white")
-	gui.drawText(0, 4, "Génération:" .. nbGeneration .. "Id:" .. idPopulation .. " nbEspece:" .. 
+	gui.drawText(0, 4, "Génération:" .. nbGeneration .. " Id:" .. idPopulation .. " nbEspece:" .. 
 							#lesEspeces .. "\nDistance:" .. 
 							laPopulation[idPopulation].fitness .. " (max = " .. fitnessMax .. ")", "black")
 end
