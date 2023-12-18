@@ -1,3 +1,18 @@
+function gererPopulation()
+    laPopulation = newPopulation()
+    for i = 1, #laPopulation do
+        mutation(laPopulation[i])
+    end
+
+    for i = 2, #laPopulation do
+        laPopulation[i] = copier(laPopulation[1])
+        mutation(laPopulation[i])
+    end
+
+    lesEspeces = trierPopulation(laPopulation)
+    laPopulation = nouvelleGeneration(laPopulation, lesEspeces)
+end
+
 -- Fonction pour effectuer un croisement entre deux réseaux de neurones
 function crossover(unReseau1, unReseau2)
     local leReseau = newReseau()

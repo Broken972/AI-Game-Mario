@@ -141,3 +141,57 @@ function niveauReussi()
 	terminerScript() -- Nettoyez avant de quitter.
 	os.exit()
 end
+
+function miseAJour()
+    majReseau(laPopulation[idPopulation], marioBase)
+    feedForward(laPopulation[idPopulation])
+    appliquerLesBoutons(laPopulation[idPopulation])
+end
+
+function gererGeneration()
+    fitnessAvant = laPopulation[idPopulation].fitness
+
+    -- Gestion de la fitness et des générations
+    if nbFrame == 0 then
+        fitnessInit = laPopulation[idPopulation].fitness
+    end
+
+    nbFrame = nbFrame + 1
+
+    if fitnessMax < laPopulation[idPopulation].fitness then
+        fitnessMax = laPopulation[idPopulation].fitness
+    end
+
+    -- Réinitialisation et gestion des générations
+    if fitnessAvant == laPopulation[idPopulation].fitness and memory.readbyte(0x13D4) == 0 then
+        nbFrameStop = nbFrameStop + 1
+        local nbFrameReset = (fitnessInit ~= laPopulation[idPopulation].fitness and memory.readbyte(0x0071) ~= 9) and NB_FRAME_RESET_PROGRES or NB_FRAME_RESET_BASE
+
+        if nbFrameStop > nbFrameReset then
+            nbFrameStop = 0
+            lancerNiveau()
+            idPopulation = idPopulation + 1
+
+            if idPopulation > #laPopulation then
+                if not niveauFiniSauvegarde then
+                    for i = 1, #laPopulation do
+                        if laPopulation[i].fitness == FITNESS_LEVEL_FINI then
+                            sauvegarderPopulation(laPopulation, true)
+                            niveauFiniSauvegarde = true
+                            console.log("Niveau fini après " .. nbGeneration .. " génération(s) !")
+                            break
+                        end
+                    end
+                end
+                idPopulation = 1
+                nbGeneration = nbGeneration + 1
+                lesEspeces = trierPopulation(laPopulation)
+                laPopulation = nouvelleGeneration(laPopulation, lesEspeces)
+                nbFrame = 0
+                fitnessInit = 0
+            end
+        end
+    else
+        nbFrameStop = 0
+    end
+end
