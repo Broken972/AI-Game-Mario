@@ -137,7 +137,7 @@ end
 
 function niveauReussi()
 	console.log("Le niveau est réussi ! Arrêt du script.")
-	terminerScript() -- Nettoyez avant de quitter.
+    sauvegarderPopulationFin(laPopulation)
 	os.exit()
 
 end

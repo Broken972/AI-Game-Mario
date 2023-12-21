@@ -12,7 +12,7 @@ function getNomFichierSauvegarde()
 end
 
 
-function sauvegarderPopulation(laPopulation, estFini)
+function sauvegarderPopulationFin(laPopulation)
     local chemin = getNomFichierSauvegarde()
     if estFini then
         chemin = "Fini" .. chemin
@@ -49,7 +49,7 @@ function sauvegarderPopulation(laPopulation, estFini)
     sauvegarderUnReseau(lePlusFort, fichier)
 
     -- Nouvelle logique pour sauvegarder et réinitialiser le réseau qui a fini le niveau
-    if estFini then
+
         for _, reseau in ipairs(laPopulation) do
             if reseau.fitness == FITNESS_LEVEL_FINI then
                 reseau.fitness = 0 -- Réinitialisation du fitness
@@ -57,7 +57,7 @@ function sauvegarderPopulation(laPopulation, estFini)
                 break
             end
         end
-    end
+    
 
     io.close(fichier)
     console.log("sauvegarde terminee au fichier " .. chemin)

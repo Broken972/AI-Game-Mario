@@ -14,7 +14,6 @@ local utils = require("./controllers/utils")
 
 -- Fonctions principales
 local function initialiser()
-    event.onexit(terminerScript)
     console.clear()
     math.randomseed(os.time())
 
