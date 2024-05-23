@@ -35,17 +35,17 @@ local CONSTANTS = {
     },
     
     -- Fitness et reset
-    FITNESS_LEVEL_FINISHED = 1000000,
-    BASE_FRAME_RESET = 33,
-    PROGRESS_FRAME_RESET = 300,
+    FITNESS_LEVEL_FINISHED = 10000,
+    BASE_FRAME_RESET = 33, -- 33
+    PROGRESS_FRAME_RESET = 350, -- 300
     
     -- Réseau de neurones
-    MAX_NEURON_COUNT = 100000,
+    MAX_NEURON_COUNT = 50000,
     INPUT_COUNT = 11 * 9,  -- TILE_COUNT_WIDTH * TILE_COUNT_HEIGHT
     OUTPUT_COUNT = 5,  -- touches de la manette
     
     -- Population
-    POPULATION_SIZE = 100,  -- nombre d'individus créés pour une nouvelle population
+    POPULATION_SIZE = 100,  -- 100 nombre d'individus créés pour une nouvelle population
 
     -- Spécies sorting constants
     SPECIES = {
@@ -56,11 +56,11 @@ local CONSTANTS = {
 
     -- Mutation
     MUTATION = {
-        CONNECTION_RESET_CHANCE = 0.25,
+        CONNECTION_RESET_CHANCE = 0.30, -- 0.25
         CONNECTION_WEIGHT_ADDITION = 0.80,
-        WEIGHT_MUTATION_CHANCE = 0.95,
+        WEIGHT_MUTATION_CHANCE = 0.90,
         CONNECTION_MUTATION_CHANCE = 0.85,
-        NEURON_MUTATION_CHANCE = 0.39
+        NEURON_MUTATION_CHANCE = 0.35
     },
     
     -- Inputs de la manette
