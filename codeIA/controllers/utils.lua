@@ -1,5 +1,8 @@
 local CONSTANTS = require("./controllers/constant")
-local population = require("./controllers/population")
+
+local input_table = {}
+local sprite_table = {}
+local tile_table = {}
 
 -- Copie un objet et renvoie l'objet copié
 -- Source: http://lua-users.org/wiki/CopyTable
@@ -69,11 +72,10 @@ end
 
 -- Retourne une liste des positions (x, y) des sprites à l'écran (taille max 10)
 local function getLesSprites()
-    local lesSprites = {}
     local j = 1
     for i = 0, CONSTANTS.MAX_SPRITE_COUNT do
         if memory.readbyte(0x14C8 + i) > 7 then
-            lesSprites[j] = {
+            sprite_table[j] = {
                 x = memory.readbyte(0xE4 + i) + memory.readbyte(0x14E0 + i) * 256,
                 y = math.floor(memory.readbyte(0xD8 + i) + memory.readbyte(0x14D4 + i) * 256)
             }
@@ -83,7 +85,7 @@ local function getLesSprites()
 
     for i = 0, CONSTANTS.MAX_SPRITE_COUNT do
         if memory.readbyte(0x170B + i) ~= 0 then
-            lesSprites[j] = {
+            sprite_table[j] = {
                 x = memory.readbyte(0x171F + i) + memory.readbyte(0x1733 + i) * 256,
                 y = math.floor(memory.readbyte(0x1715 + i) + memory.readbyte(0x1729 + i) * 256)
             }
@@ -91,12 +93,11 @@ local function getLesSprites()
         end
     end
 
-    return lesSprites
+    return sprite_table
 end
 
 -- Renvoie une table de tiles autour de Mario
 local function getLesTiles()
-    local lesTiles = {}
     local mario = getPositionMario()
     mario.x = mario.x - CONSTANTS.VIEW_WIDTH / 2
     mario.y = mario.y - CONSTANTS.VIEW_HEIGHT / 2
@@ -108,22 +109,20 @@ local function getLesTiles()
             local indice = getIndiceLesInputs(i, j)
 
             if xT > 0 and yT > 0 then
-                lesTiles[indice] = memory.readbyte(
+                tile_table[indice] = memory.readbyte(
                     0x1C800 +
                     math.floor(xT / CONSTANTS.TILE_SIZE) * 0x1B0 +
                     yT * CONSTANTS.TILE_SIZE +
                     xT % CONSTANTS.TILE_SIZE
                 )
             else
-                lesTiles[indice] = 0
+                tile_table[indice] = 0
             end
         end
     end
 
-    return lesTiles
+    return tile_table
 end
-
-
 
 -- Applique les boutons aux joypads de l'émulateur avec un réseau de neurones
 local function appliquerLesBoutons(unReseau)
@@ -154,17 +153,17 @@ end)
 
 -- Active la sauvegarde
 local function activerSauvegarde()
-    sauvegarderPopulation(laPopulation, false)
+    population.sauvegarderPopulation(constants.GLOBALS.population, false)
 end
 
 -- Active le chargement
 local function activerChargement()
     local chemin = forms.openfile()
     if chemin ~= "" then
-        local laPopulationT = chargerPopulation(chemin)
+        local laPopulationT = population.chargerPopulation(chemin)
         if laPopulationT then
-            laPopulation = copier(laPopulationT)
-            idPopulation = 1
+            constants.GLOBALS.population = copier(laPopulationT)
+            constants.GLOBALS.population_id = 1
             lancerNiveau()
         end
     end
@@ -172,10 +171,9 @@ end
 
 -- Renvoie les inputs, créés en fonction de la position de Mario
 local function getLesInputs()
-    local lesInputs = {}
     for i = 1, CONSTANTS.TILE_COUNT_WIDTH do
         for j = 1, CONSTANTS.TILE_COUNT_HEIGHT do
-            lesInputs[getIndiceLesInputs(i, j)] = 0
+            input_table[getIndiceLesInputs(i, j)] = 0
         end
     end
 
@@ -183,7 +181,7 @@ local function getLesInputs()
     for _, sprite in ipairs(lesSprites) do
         local input = convertirPositionPourInput(sprite)
         if input.x > 0 and input.x < CONSTANTS.TILE_COUNT_WIDTH + 1 then
-            lesInputs[getIndiceLesInputs(input.x, input.y)] = -1
+            input_table[getIndiceLesInputs(input.x, input.y)] = -1
         end
     end
 
@@ -192,15 +190,13 @@ local function getLesInputs()
         for j = 1, CONSTANTS.TILE_COUNT_HEIGHT do
             local indice = getIndiceLesInputs(i, j)
             if lesTiles[indice] ~= 0 then
-                lesInputs[indice] = lesTiles[indice]
+                input_table[indice] = lesTiles[indice]
             end
         end
     end
 
-    return lesInputs
+    return input_table
 end
-
-
 
 return {
     copier = copier,
