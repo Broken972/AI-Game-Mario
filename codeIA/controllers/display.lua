@@ -2,10 +2,23 @@ local CONSTANTS = require("./controllers/constant")
 local utils = require("./controllers/utils")
 
 local function dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
-    gui.drawBox(0, 0, 256, 40, "black", "white")
-    gui.drawText(0, 4, "Generation " .. nbGeneration .. " Ind:" .. CONSTANTS.GLOBALS.population_id .. " nb espece " ..
-                    #lesEspeces .. "\nFitness:" ..
-                    laPopulation[CONSTANTS.GLOBALS.population_id].fitness .. " (max = " .. CONSTANTS.GLOBALS.max_fitness .. ")", "black")
+    gui.drawBox(0, 0, 256, 60, "black", "white")
+    
+    -- Informations générales
+    gui.drawText(10, 4, "Generation: " .. nbGeneration, "black")
+    gui.drawText(10, 20, "Individu: " .. CONSTANTS.GLOBALS.population_id, "black")
+    gui.drawText(10, 36, "Especes: " .. #lesEspeces, "black")
+    
+    -- Fitness
+    local fitness = laPopulation[CONSTANTS.GLOBALS.population_id].fitness
+    local max_fitness = CONSTANTS.GLOBALS.max_fitness
+    gui.drawText(150, 4, "Fitness: " .. fitness, "black")
+    gui.drawText(150, 20, "Max Fitness: " .. max_fitness, "black")
+    
+    -- Barres de progression
+    local fitness_ratio = fitness / max_fitness
+    gui.drawBox(150, 36, 150 + 100 * fitness_ratio, 46, "green", "white")
+    gui.drawBox(150 + 100 * fitness_ratio, 36, 250, 46, "gray", "white")
 end
 
 local function dessinerUnReseau(unReseau)
