@@ -33,7 +33,7 @@ NB_FRAME_RESET_BASE = 33 -- si pendant x frames la fitness n'augmente pas compar
 NB_FRAME_RESET_PROGRES = 300 -- si il a eu un progrés (diff de la fitness au lancement) on laisse le jeu tourner un peu + longtemps avant le reset
 NB_NEURONE_MAX = 100000 -- pour le reseau de neurone, hors input et output
 NB_INPUT = NB_TILE_W * NB_TILE_H -- nb de neurones input, c'est chaque case du jeu en fait
-NB_OUTPUT = 8 -- nb de neurones output, c'est à dire les touches de la manette
+NB_OUTPUT = 5 -- nb de neurones output, c'est à dire les touches de la manette
 NB_INDIVIDU_POPULATION = 100 -- nombre d'individus créés quand création d'une nouvelle population
 -- constante pour trier les especes des populations
 EXCES_COEF = 0.50
@@ -49,15 +49,16 @@ CHANCE_MUTATION_NEURONE = 0.39
  
 -- doit correspondre aux inputs de la manette dans l'emulateur
 lesBoutons = {
-	{nom = "P1 A"},
-	{nom = "P1 B"},
-	{nom = "P1 X"},
-	{nom = "P1 Y"},
-	{nom = "P1 Up"},
+	{nom = "P1 A"}, -- sauter
+	-- {nom = "P1 B"},sauter
+	-- {nom = "P1 X"},
+	{nom = "P1 Y"}, -- courir
+	-- {nom = "P1 Up"},
 	{nom = "P1 Down"},
 	{nom = "P1 Left"},
 	{nom = "P1 Right"}
 }
+
 nbInnovation = 0 -- nombre d'innovation global pour les connexions, important pour le reseau de neurone
 fitnessMax = 0 -- fitness max atteinte 
 nbGeneration = 1 -- pour suivre on est à la cb de generation

@@ -1,153 +1,135 @@
--- Chargement des modules
-local constant = require("./controllers/constant")
+local constants = require("./controllers/constant")
 local display = require("./controllers/display")
-local interaction = require("./controllers/interaction")
+local mutation = require("./controllers/mutation")
 local network = require("./controllers/network")
 local neuron = require("./controllers/neuron")
 local population = require("./controllers/population")
 local utils = require("./controllers/utils")
 
-
-
--- relance le niveau et reset tout pour le nouvel individu
-function lancerNiveau()
-	savestate.load(NOM_SAVESTATE)
-	marioBase = getPositionMario()
-	niveauFini = false
-	nbFrameStop = 0
+local function lancerNiveau()
+    savestate.load(constants.SAVESTATE_NAME)
+    constants.GLOBALS.mario_base_position = utils.getPositionMario()
+    constants.GLOBALS.level_finished = false
+    constants.GLOBALS.frame_stop_count = 0
 end
- 
+
 console.clear()
--- petit check pour voir si c'est bien la bonne rom
-if gameinfo.getromname() ~= NOM_JEU then
-	console.log("mauvaise rom (actuellement " .. gameinfo.getromname() .. "), marche uniquement avec " .. nomJeu)
+if gameinfo.getromname() ~= constants.GAME_NAME then
+    console.log("Mauvaise ROM (actuellement " .. gameinfo.getromname() .. "), marche uniquement avec " .. constants.GAME_NAME)
 else
-	console.log("lancement du script")
-	math.randomseed(os.time())
- 
-	lancerNiveau()
- 
-	form = forms.newform(TAILLE_FORM_W, TAILLE_FORM_H, "Informations")
-	labelInfo = forms.label(form, "a maj", 0, 0, 350, 220)
-	estAccelere = forms.checkbox(form, "Accelerer", 10, 220)
-	estAfficheReseau = forms.checkbox(form, "Afficher reseau", 10, 240)
-	estAfficheInfo = forms.checkbox(form, "Afficher bandeau", 10, 260)
-	forms.button(form, "Pause", traitementPause, 10, 285)
-	forms.button(form, "Sauvegarder", activerSauvegarde, 10, 315)
-	forms.button(form, "Charger", activerChargement, 100, 315)
- 
-	laPopulation = newPopulation() 
- 
-	for i = 1, #laPopulation, 1 do
-		mutation(laPopulation[i])
-	end	
- 
-	for i = 2, #laPopulation, 1 do
-		laPopulation[i] = copier(laPopulation[1])
-		mutation(laPopulation[i])
-	end	
- 
-	lesEspeces = trierPopulation(laPopulation)
-	laPopulation = nouvelleGeneration(laPopulation, lesEspeces)
- 
-	-- boucle principale 
-	while true do
- 
-		-- ça va permettre de suivre si pendant cette frame il y a du l'evolution
-		local fitnessAvant = laPopulation[idPopulation].fitness
-		nettoyer = true
- 
- 
-		if forms.ischecked(estAccelere) then
-			emu.limitframerate(false)
-		else
-			emu.limitframerate(true)
-		end
- 
-		if forms.ischecked(estAfficheReseau) then
-			dessinerUnReseau(laPopulation[idPopulation])
-			nettoyer = false
-		end
- 
-		if forms.ischecked(estAfficheInfo) then
-			dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
-			nettoyer = false
-		end
- 
- 
- 
-		if nettoyer then
-			gui.clearGraphics()
-		end
- 
- 
-		majReseau(laPopulation[idPopulation], marioBase)
-		feedForward(laPopulation[idPopulation])
-		appliquerLesBoutons(laPopulation[idPopulation])
- 
- 
-		if nbFrame == 0 then
-			fitnessInit = laPopulation[idPopulation].fitness
-		end
- 
-		emu.frameadvance()
-		nbFrame = nbFrame + 1
- 
- 
-		if fitnessMax < laPopulation[idPopulation].fitness then
-			fitnessMax = laPopulation[idPopulation].fitness
-		end
- 
-		-- si pas d'évolution ET que le jeu n'est pas en pause, on va voir si on reset ou pas
-		if fitnessAvant == laPopulation[idPopulation].fitness and memory.readbyte(0x13D4) == 0 then
-			nbFrameStop = nbFrameStop + 1
-			local nbFrameReset = NB_FRAME_RESET_BASE
-			-- si il y a eu progrés ET QUE mario n'est pas MORT
-			if fitnessInit ~= laPopulation[idPopulation].fitness and memory.readbyte(0x0071) ~= 9 then
-				nbFrameReset = NB_FRAME_RESET_PROGRES
-			end
-			if nbFrameStop > nbFrameReset then
-				nbFrameStop = 0
-				lancerNiveau()
-				idPopulation = idPopulation + 1
-				-- si on en est là, on va refaire une generation
-				if idPopulation > #laPopulation then
-					-- je check avant tout si le niveau a pas été terminé 
-					if not niveauFiniSauvegarde then
-						for i = 1, #laPopulation, 1 do
-							-- le level a été fini une fois, 
-							if laPopulation[i].fitness == FITNESS_LEVEL_FINI then
-								sauvegarderPopulation(laPopulation, true)
-								niveauFiniSauvegarde = true
-								console.log("Niveau fini apres " .. nbGeneration .. " generation !")
-							end
-						end
-					end
-					idPopulation = 1
-					nbGeneration = nbGeneration + 1
-					lesEspeces = trierPopulation(laPopulation)
-					laPopulation = nouvelleGeneration(laPopulation, lesEspeces)
-					nbFrame = 0
-					fitnessInit = 0
-				end
-			end
-		else
-			nbFrameStop = 0
-		end
- 
-		-- maj du label actuel
-		local str = "generation " .. nbGeneration .. " Fitness maximal: " .. 
-						fitnessMax .. "\nInformations sur l'individu actuel:\n" .. 
-						"id: " .. idPopulation .. "/" .. #laPopulation .." neurones: " .. 
-						#laPopulation[idPopulation].lesNeurones .. " connexions: " ..
-						#laPopulation[idPopulation].lesConnexions .. " enfant de l'espece " .. 
-						laPopulation[idPopulation].idEspeceParent ..
-						"\n\nInfos sur les especes: " .. 
-						"\nIl y a " .. #lesEspeces .. " espece(s) "
-		for i = 1, #lesEspeces, 1 do
-			str = str .. "\nespece " .. i .. " a fait " .. lesEspeces[i].nbEnfant .. " enfant(s)"  .. " (fitnessmax " .. lesEspeces[i].fitnessMax .. ") "
-		end
-		forms.settext(labelInfo, str)
-	end
- 
+    console.log("Lancement du script")
+    math.randomseed(os.time())
+
+    lancerNiveau()
+
+    local form = forms.newform(constants.FORM_WIDTH, constants.FORM_HEIGHT, "Informations")
+    local labelInfo = forms.label(form, "a maj", 0, 0, 350, 220)
+    local estAccelere = forms.checkbox(form, "Accelerer", 10, 220)
+    local estAfficheReseau = forms.checkbox(form, "Afficher reseau", 10, 240)
+    local estAfficheInfo = forms.checkbox(form, "Afficher bandeau", 10, 260)
+    forms.button(form, "Pause", utils.traitementPause, 10, 285)
+    forms.button(form, "Sauvegarder", utils.activerSauvegarde, 10, 315)
+    forms.button(form, "Charger", utils.activerChargement, 100, 315)
+
+    constants.GLOBALS.population = population.newPopulation()
+
+    for i = 1, #constants.GLOBALS.population do
+        mutation.mutation(constants.GLOBALS.population[i])
+    end
+
+    for i = 2, #constants.GLOBALS.population do
+        constants.GLOBALS.population[i] = utils.copier(constants.GLOBALS.population[1])
+        mutation.mutation(constants.GLOBALS.population[i])
+    end
+
+    constants.GLOBALS.species_list = population.trierPopulation(constants.GLOBALS.population)
+    constants.GLOBALS.population = population.nouvelleGeneration(constants.GLOBALS.population, constants.GLOBALS.species_list)
+
+    while true do
+        local fitnessAvant = constants.GLOBALS.population[constants.GLOBALS.population_id].fitness
+        local nettoyer = true
+
+        if forms.ischecked(estAccelere) then
+            emu.limitframerate(false)
+        else
+            emu.limitframerate(true)
+        end
+
+        if forms.ischecked(estAfficheReseau) then
+            display.dessinerUnReseau(constants.GLOBALS.population[constants.GLOBALS.population_id])
+            nettoyer = false
+        end
+
+        if forms.ischecked(estAfficheInfo) then
+            display.dessinerLesInfos(constants.GLOBALS.population, constants.GLOBALS.species_list, constants.GLOBALS.generation_number)
+            nettoyer = false
+        end
+
+        if nettoyer then
+            gui.clearGraphics()
+        end
+
+        network.majReseau(constants.GLOBALS.population[constants.GLOBALS.population_id], constants.GLOBALS.mario_base_position)
+        network.feedForward(constants.GLOBALS.population[constants.GLOBALS.population_id])
+        utils.appliquerLesBoutons(constants.GLOBALS.population[constants.GLOBALS.population_id])
+
+        if constants.GLOBALS.current_frame_count == 0 then
+            constants.GLOBALS.initial_fitness = constants.GLOBALS.population[constants.GLOBALS.population_id].fitness
+        end
+
+        emu.frameadvance()
+        constants.GLOBALS.current_frame_count = constants.GLOBALS.current_frame_count + 1
+
+        if constants.GLOBALS.max_fitness < constants.GLOBALS.population[constants.GLOBALS.population_id].fitness then
+            constants.GLOBALS.max_fitness = constants.GLOBALS.population[constants.GLOBALS.population_id].fitness
+        end
+
+        if fitnessAvant == constants.GLOBALS.population[constants.GLOBALS.population_id].fitness and memory.readbyte(0x13D4) == 0 then
+            constants.GLOBALS.frame_stop_count = constants.GLOBALS.frame_stop_count + 1
+            local nbFrameReset = constants.BASE_FRAME_RESET
+
+            if constants.GLOBALS.initial_fitness ~= constants.GLOBALS.population[constants.GLOBALS.population_id].fitness and memory.readbyte(0x0071) ~= 9 then
+                nbFrameReset = constants.PROGRESS_FRAME_RESET
+            end
+
+            if constants.GLOBALS.frame_stop_count > nbFrameReset then
+                constants.GLOBALS.frame_stop_count = 0
+                lancerNiveau()
+                constants.GLOBALS.population_id = constants.GLOBALS.population_id + 1
+
+                if constants.GLOBALS.population_id > #constants.GLOBALS.population then
+                    if not constants.GLOBALS.level_finished_saved then
+                        for i = 1, #constants.GLOBALS.population do
+                            if constants.GLOBALS.population[i].fitness == constants.FITNESS_LEVEL_FINISHED then
+                                population.sauvegarderPopulation(constants.GLOBALS.population, true)
+                                constants.GLOBALS.level_finished_saved = true
+                                console.log("Niveau fini après " .. constants.GLOBALS.generation_number .. " générations !")
+                            end
+                        end
+                    end
+                    constants.GLOBALS.population_id = 1
+                    constants.GLOBALS.generation_number = constants.GLOBALS.generation_number + 1
+                    constants.GLOBALS.species_list = population.trierPopulation(constants.GLOBALS.population)
+                    constants.GLOBALS.population = population.nouvelleGeneration(constants.GLOBALS.population, constants.GLOBALS.species_list)
+                    constants.GLOBALS.current_frame_count = 0
+                    constants.GLOBALS.initial_fitness = 0
+                end
+            end
+        else
+            constants.GLOBALS.frame_stop_count = 0
+        end
+
+        local str = "Generation " .. constants.GLOBALS.generation_number .. " Fitness maximal: " ..
+                    constants.GLOBALS.max_fitness .. "\nInformations sur l'individu actuel:\n" ..
+                    "id: " .. constants.GLOBALS.population_id .. "/" .. #constants.GLOBALS.population .. " neurones: " ..
+                    #constants.GLOBALS.population[constants.GLOBALS.population_id].lesNeurones .. " connexions: " ..
+                    #constants.GLOBALS.population[constants.GLOBALS.population_id].lesConnexions .. " enfant de l'espèce " ..
+                    constants.GLOBALS.population[constants.GLOBALS.population_id].idEspeceParent ..
+                    "\n\nInfos sur les espèces: " ..
+                    "\nIl y a " .. #constants.GLOBALS.species_list .. " espèce(s) "
+        for i = 1, #constants.GLOBALS.species_list do
+            str = str .. "\nespèce " .. i .. " a fait " .. constants.GLOBALS.species_list[i].nbEnfant .. " enfant(s)"  .. " (fitness max " .. constants.GLOBALS.species_list[i].fitnessMax .. ") "
+        end
+        forms.settext(labelInfo, str)
+    end
 end

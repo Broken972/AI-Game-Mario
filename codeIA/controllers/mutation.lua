@@ -1,143 +1,112 @@
--- créé une espece (un regroupement de reseaux, d'individus)
-function newEspece() 
-	local espece = {nbEnfant = 0, -- combien d'enfant cette espece a créé 
-					fitnessMoyenne = 0, -- fitness moyenne de l'espece
-					fitnessMax = 0, -- fitness max atteinte par l'espece
-					lesReseaux = {} }-- tableau qui regroupe les reseaux}
- 
- 
-	return espece
-end
- 
+local CONSTANTS = require("./controllers/constant")
+local utils = require("./controllers/utils")
+local network = require("./controllers/network")
+local neuron = require("./controllers/neuron") -- Ajout de l'importation du module neuron
 
--- modifie les connexions d'un reseau de neurone
-function mutationPoidsConnexions(unReseau)
-	for i = 1, #unReseau.lesConnexions, 1 do
-		if unReseau.lesConnexions[i].actif then
-			if math.random() < CHANCE_MUTATION_RESET_CONNEXION then
-				unReseau.lesConnexions[i].poids = genererPoids()
-			else
-				if math.random() >= 0.5 then
-					unReseau.lesConnexions[i].poids = unReseau.lesConnexions[i].poids - POIDS_CONNEXION_MUTATION_AJOUT
-				else
-					unReseau.lesConnexions[i].poids = unReseau.lesConnexions[i].poids + POIDS_CONNEXION_MUTATION_AJOUT
-				end
-			end
-		end
-	end
+local function newEspece()
+    return {
+        nbEnfant = 0,
+        fitnessMoyenne = 0,
+        fitnessMax = 0,
+        lesReseaux = {}
+    }
 end
 
--- ajoute une connexion entre 2 neurones pas déjà connecté entre eux
--- ça peut ne pas marcher si aucun neurone n'est connectable entre eux (uniquement si beaucoup de connexion)
-function mutationAjouterConnexion(unReseau)
-	local liste = {}
- 
-	-- randomisation + copies des neuronnes dans une liste
-	for i, v in ipairs(unReseau.lesNeurones) do
-		local pos = math.random(1, #liste+1)
-		table.insert(liste, pos, v)
-	end
- 
-	-- la je vais lister tous les neurones et voir si une pair n'a pas de connexion; si une connexion peut être créée 
-	-- on la créée et on stop
-	local traitement = false
-	for i = 1, #liste, 1 do
-		for j = 1, #liste, 1 do
-			if i ~= j then
-				local neurone1 = liste[i]
-				local neurone2 = liste[j]
- 
- 
-				if (neurone1.type == "input" and neurone2.type == "output") or
-					(neurone1.type == "hidden" and neurone2.type == "hidden") or
-					(neurone1.type == "hidden" and neurone2.type == "output") then
-					-- si on en est là, c'est que la connexion peut se faire, juste à tester si y pas deja une connexion
-					local dejaConnexion = false
-					for k = 1, #unReseau.lesConnexions, 1 do
-						if unReseau.lesConnexions[k].entree == neurone1.id
-							and unReseau.lesConnexions[k].sortie == neurone2.id then
-							dejaConnexion = true
-							break
-						end
-					end
- 
- 
- 
-					if dejaConnexion == false then
-						-- nouvelle connexion, traitement terminé 
-						traitement = true
-						ajouterConnexion(unReseau, neurone1.id, neurone2.id)
-					end
-				end
-			end
-			if traitement then 
-				break
-			end
-		end
-		if traitement then 
-			break
-		end
-	end
- 
- 
-	if traitement == false then
-		console.log("impossible de recreer une connexion")
-	end
+local function mutationPoidsConnexions(unReseau)
+    for _, connexion in ipairs(unReseau.lesConnexions) do
+        if connexion.actif then
+            if math.random() < CONSTANTS.MUTATION.CONNECTION_RESET_CHANCE then
+                connexion.poids = utils.genererPoids()
+            else
+                connexion.poids = connexion.poids + (math.random() >= 0.5 and -CONSTANTS.MUTATION.CONNECTION_WEIGHT_ADDITION or CONSTANTS.MUTATION.CONNECTION_WEIGHT_ADDITION)
+            end
+        end
+    end
 end
- 
- 
--- ajoute un neurone (couche caché uniquement) entre 2 neurones déjà connecté. Ne peut pas marcher
--- si il n'y a pas de connexion 
-function mutationAjouterNeurone(unReseau)
-	if #unReseau.lesConnexions == 0 then
-		log("Impossible d'ajouter un neurone entre 2 connexions si pas de connexion")
-		return nil
-	end
- 
-	if unReseau.nbNeurone == NB_NEURONE_MAX then
-		console.log("Nombre de neurone max atteint")
-		return nil
-	end
- 
-	-- randomisation de la liste des connexions
-	local listeIndice = {}
-	local listeRandom = {}
- 
-	-- je créé une liste d'entier de 1 à la taille des connexions
-	for i = 1, #unReseau.lesConnexions, 1 do
-		listeIndice[i] = i
-	end
- 
-	-- je randomise la liste que je viens de créer dans listeRandom
-	for i, v in ipairs(listeIndice) do
-		local pos = math.random(1, #listeRandom+1)
-		table.insert(listeRandom, pos, v)
-	end
- 
-	for i = 1, #listeRandom, 1 do
-		if unReseau.lesConnexions[listeRandom[i]].actif then
-			unReseau.lesConnexions[listeRandom[i]].actif = false
-			unReseau.nbNeurone = unReseau.nbNeurone + 1
-			local indice = unReseau.nbNeurone + NB_INPUT + NB_OUTPUT 
-			ajouterNeurone(unReseau, indice, "hidden", 1)
-			ajouterConnexion(unReseau, unReseau.lesConnexions[listeRandom[i]].entree, indice, genererPoids())
-			ajouterConnexion(unReseau, indice, unReseau.lesConnexions[listeRandom[i]].sortie, genererPoids())
-			break
-		end
-	end
+
+local function mutationAjouterConnexion(unReseau)
+    local neurones = {}
+    for _, neurone in ipairs(unReseau.lesNeurones) do
+        table.insert(neurones, math.random(#neurones + 1), neurone)
+    end
+
+    for i = 1, #neurones do
+        for j = 1, #neurones do
+            if i ~= j then
+                local neurone1 = neurones[i]
+                local neurone2 = neurones[j]
+
+                if (neurone1.type == "input" and neurone2.type == "output") or
+                   (neurone1.type == "hidden" and neurone2.type == "hidden") or
+                   (neurone1.type == "hidden" and neurone2.type == "output") then
+                    local dejaConnexion = false
+                    for _, connexion in ipairs(unReseau.lesConnexions) do
+                        if connexion.entree == neurone1.id and connexion.sortie == neurone2.id then
+                            dejaConnexion = true
+                            break
+                        end
+                    end
+
+                    if not dejaConnexion then
+                        network.ajouterConnexion(unReseau, neurone1.id, neurone2.id)
+                        return
+                    end
+                end
+            end
+        end
+    end
+
+    console.log("Impossible de créer une nouvelle connexion")
 end
- 
- 
--- appelle une des mutations aléatoirement en fonction des constantes
-function mutation(unReseau)
-	local random = math.random()
-	if random < CHANCE_MUTATION_POIDS then
-		mutationPoidsConnexions(unReseau)
-	end
-	if random < CHANCE_MUTATION_CONNEXION then
-		mutationAjouterConnexion(unReseau)
-	end
-	if random < CHANCE_MUTATION_NEURONE then
-		mutationAjouterNeurone(unReseau)
-	end
+
+local function mutationAjouterNeurone(unReseau)
+    if #unReseau.lesConnexions == 0 then
+        console.log("Impossible d'ajouter un neurone sans connexion existante")
+        return
+    end
+
+    if unReseau.nbNeurone >= CONSTANTS.MAX_NEURON_COUNT then
+        console.log("Nombre maximum de neurones atteint")
+        return
+    end
+
+    local connexions = {}
+    for i = 1, #unReseau.lesConnexions do
+        connexions[i] = i
+    end
+
+    for i = 1, #connexions do
+        local index = math.random(#connexions)
+        local connexion = unReseau.lesConnexions[connexions[index]]
+        if connexion.actif then
+            connexion.actif = false
+            unReseau.nbNeurone = unReseau.nbNeurone + 1
+            local newNeuroneId = unReseau.nbNeurone + CONSTANTS.INPUT_COUNT + CONSTANTS.OUTPUT_COUNT
+            neuron.ajouterNeurone(unReseau, newNeuroneId, "hidden", 1)
+            network.ajouterConnexion(unReseau, connexion.entree, newNeuroneId, utils.genererPoids())
+            network.ajouterConnexion(unReseau, newNeuroneId, connexion.sortie, utils.genererPoids())
+            return
+        end
+    end
 end
+
+local function mutation(unReseau)
+    local random = math.random()
+    if random < CONSTANTS.MUTATION.WEIGHT_MUTATION_CHANCE then
+        mutationPoidsConnexions(unReseau)
+    end
+    if random < CONSTANTS.MUTATION.CONNECTION_MUTATION_CHANCE then
+        mutationAjouterConnexion(unReseau)
+    end
+    if random < CONSTANTS.MUTATION.NEURON_MUTATION_CHANCE then
+        mutationAjouterNeurone(unReseau)
+    end
+end
+
+return {
+    newEspece = newEspece,
+    mutationPoidsConnexions = mutationPoidsConnexions,
+    mutationAjouterConnexion = mutationAjouterConnexion,
+    mutationAjouterNeurone = mutationAjouterNeurone,
+    mutation = mutation
+}
