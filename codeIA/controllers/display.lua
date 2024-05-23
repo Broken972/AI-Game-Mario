@@ -13,7 +13,7 @@ local function dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
     local fitness = laPopulation[CONSTANTS.GLOBALS.population_id].fitness
     local max_fitness = CONSTANTS.GLOBALS.max_fitness
     gui.drawText(150, 4, "Fitness: " .. fitness, "black")
-    gui.drawText(150, 20, "Max Fitness: " .. max_fitness, "black")
+    gui.drawText(150, 20, "Max Fit: " .. max_fitness, "black")
     
     -- Barres de progression
     local fitness_ratio = fitness / max_fitness
