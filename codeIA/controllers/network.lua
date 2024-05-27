@@ -2,6 +2,7 @@ local CONSTANTS = require("./controllers/constant")
 local utils = require("./controllers/utils")
 local neuron = require("./controllers/neuron")
 
+-- Crée une nouvelle connexion
 local function newConnexion()
     return {
         entree = 0,
@@ -13,6 +14,7 @@ local function newConnexion()
     }
 end
 
+-- Crée un nouveau réseau de neurones
 local function newReseau()
     local reseau = {
         nbNeurone = 0,
@@ -32,14 +34,14 @@ local function newReseau()
     return reseau
 end
 
+-- Ajoute une connexion à un réseau de neurones
 local function ajouterConnexion(unReseau, entree, sortie, poids)
     if unReseau.lesNeurones[entree].id == 0 then
-        console.log("Connexion avec l'entrée " .. entree .. " n'est pas initialisée ?")
+        console.log("Erreur: Connexion avec l'entrée " .. entree .. " n'est pas initialisée.")
     elseif unReseau.lesNeurones[sortie].id == 0 then
-        console.log("Connexion avec la sortie " .. sortie .. " n'est pas initialisée ?")
+        console.log("Erreur: Connexion avec la sortie " .. sortie .. " n'est pas initialisée.")
     else
         local connexion = newConnexion()
-        connexion.actif = true
         connexion.entree = entree
         connexion.sortie = sortie
         connexion.poids = utils.genererPoids()
@@ -49,6 +51,7 @@ local function ajouterConnexion(unReseau, entree, sortie, poids)
     end
 end
 
+-- Calcule la différence de poids entre deux réseaux
 local function getDiffPoids(unReseau1, unReseau2)
     local nbConnexion = 0
     local total = 0
@@ -68,6 +71,7 @@ local function getDiffPoids(unReseau1, unReseau2)
     return total / nbConnexion
 end
 
+-- Calcule le nombre de connexions disjointes entre deux réseaux
 local function getDisjoint(unReseau1, unReseau2)
     local nbPareil = 0
     for _, conn1 in ipairs(unReseau1.lesConnexions) do
@@ -81,12 +85,14 @@ local function getDisjoint(unReseau1, unReseau2)
     return #unReseau1.lesConnexions + #unReseau2.lesConnexions - 2 * nbPareil
 end
 
+-- Calcule le score de similarité entre deux réseaux
 local function getScore(unReseauTest, unReseauRep)
     return (CONSTANTS.SPECIES.EXCESS_COEF * getDisjoint(unReseauTest, unReseauRep)) /
            (math.max(#unReseauTest.lesConnexions + #unReseauRep.lesConnexions, 1)) +
            CONSTANTS.SPECIES.WEIGHT_DIFF_COEF * getDiffPoids(unReseauTest, unReseauRep)
 end
 
+-- Propagation avant des valeurs dans le réseau
 local function feedForward(unReseau)
     for _, conn in ipairs(unReseau.lesConnexions) do
         if conn.actif then
@@ -107,6 +113,7 @@ local function feedForward(unReseau)
     end
 end
 
+-- Croise deux réseaux pour en créer un nouveau
 local function crossover(unReseau1, unReseau2)
     local leReseau = utils.copier((unReseau1.fitness >= unReseau2.fitness) and unReseau1 or unReseau2)
 
@@ -120,6 +127,7 @@ local function crossover(unReseau1, unReseau2)
     return leReseau
 end
 
+-- Sauvegarde un réseau dans un fichier
 local function sauvegarderUnReseau(unReseau, fichier)
     fichier:write(unReseau.nbNeurone .. "\n")
     fichier:write(#unReseau.lesConnexions .. "\n")
@@ -139,6 +147,7 @@ local function sauvegarderUnReseau(unReseau, fichier)
     end
 end
 
+-- Charge un réseau depuis un fichier
 local function chargerUnReseau(fichier)
     local unReseau = newReseau()
     unReseau.nbNeurone = tonumber(fichier:read("*line"))
@@ -165,6 +174,7 @@ local function chargerUnReseau(fichier)
     return unReseau
 end
 
+-- Met à jour le réseau de neurones en fonction de la position de Mario
 local function majReseau(unReseau, marioBase)
     local mario = utils.getPositionMario()
 

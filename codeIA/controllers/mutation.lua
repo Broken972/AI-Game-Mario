@@ -1,8 +1,9 @@
 local CONSTANTS = require("./controllers/constant")
 local utils = require("./controllers/utils")
 local network = require("./controllers/network")
-local neuron = require("./controllers/neuron") -- Ajout de l'importation du module neuron
+local neuron = require("./controllers/neuron")
 
+-- Crée une nouvelle espèce
 local function newEspece()
     return {
         nbEnfant = 0,
@@ -12,6 +13,7 @@ local function newEspece()
     }
 end
 
+-- Mutate the weights of the connections in a network
 local function mutationPoidsConnexions(unReseau)
     for _, connexion in ipairs(unReseau.lesConnexions) do
         if connexion.actif then
@@ -24,6 +26,7 @@ local function mutationPoidsConnexions(unReseau)
     end
 end
 
+-- Add a new connection to a network
 local function mutationAjouterConnexion(unReseau)
     local neurones = {}
     for _, neurone in ipairs(unReseau.lesNeurones) do
@@ -59,6 +62,7 @@ local function mutationAjouterConnexion(unReseau)
     console.log("Impossible de créer une nouvelle connexion")
 end
 
+-- Add a new neuron to a network
 local function mutationAjouterNeurone(unReseau)
     if #unReseau.lesConnexions == 0 then
         console.log("Impossible d'ajouter un neurone sans connexion existante")
@@ -90,6 +94,7 @@ local function mutationAjouterNeurone(unReseau)
     end
 end
 
+-- Perform mutations on a network
 local function mutation(unReseau)
     local random = math.random()
     if random < CONSTANTS.MUTATION.WEIGHT_MUTATION_CHANCE then

@@ -3,6 +3,7 @@ local network = require("./controllers/network")
 local utils = require("./controllers/utils")
 local mutation = require("./controllers/mutation")
 
+-- Crée une nouvelle population
 local function newPopulation()
     local population = {}
     for i = 1, CONSTANTS.POPULATION_SIZE do
@@ -11,6 +12,7 @@ local function newPopulation()
     return population
 end
 
+-- Trie la population en espèces
 local function trierPopulation(laPopulation)
     local lesEspeces = {mutation.newEspece()}
     table.insert(lesEspeces[1].lesReseaux, utils.copier(laPopulation[#laPopulation]))
@@ -36,6 +38,7 @@ local function trierPopulation(laPopulation)
     return lesEspeces
 end
 
+-- Choisit un parent pour la reproduction
 local function choisirParent(uneEspece)
     if #uneEspece == 0 then
         console.log("uneEspece vide dans choisir parent ??")
@@ -62,11 +65,13 @@ local function choisirParent(uneEspece)
     return nil
 end
 
+-- Crée une nouvelle génération
 local function nouvelleGeneration(laPopulation, lesEspeces)
     local laNouvellePopulation = newPopulation()
     local nbIndividuACreer = CONSTANTS.POPULATION_SIZE
     local indiceNouvelleEspece = 1
 
+    -- Déterminer le fitness maximum dans la population actuelle
     local fitnessMaxPop = 0
     for _, reseau in ipairs(laPopulation) do
         if reseau.fitness > fitnessMaxPop then
@@ -74,6 +79,7 @@ local function nouvelleGeneration(laPopulation, lesEspeces)
         end
     end
 
+    -- Déterminer le fitness maximum dans les populations précédentes
     local fitnessMaxAncPop = 0
     local ancienPlusFort
     for _, anciennePop in ipairs(CONSTANTS.GLOBALS.previous_populations) do
@@ -85,6 +91,7 @@ local function nouvelleGeneration(laPopulation, lesEspeces)
         end
     end
 
+    -- Si une ancienne population est plus forte, utiliser l'ancien plus fort pour la nouvelle génération
     if fitnessMaxAncPop > fitnessMaxPop then
         for _, espece in ipairs(lesEspeces) do
             for i = 1, #espece.lesReseaux do
@@ -172,6 +179,7 @@ local function nouvelleGeneration(laPopulation, lesEspeces)
     return laNouvellePopulation
 end
 
+-- Sauvegarde la population actuelle dans un fichier
 local function sauvegarderPopulation(laPopulation, estFini)
     local chemin = utils.getNomFichierSauvegarde()
     if estFini then
@@ -207,6 +215,7 @@ local function sauvegarderPopulation(laPopulation, estFini)
     console.log("Sauvegarde terminée dans le fichier " .. chemin)
 end
 
+-- Charge une population depuis un fichier
 local function chargerPopulation(chemin)
     if not chemin:find("%.pop$") then
         console.log("Le fichier " .. chemin .. " n'est pas du bon format (.pop)")
