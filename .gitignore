@@ -1,7 +1,12 @@
 emu/*
 .idea
+
+
 # les fichier Generation *.pop
 Generation*.pop
 gen *.pop
+best_run_*.state
+FINI*.pop
+
 
 
