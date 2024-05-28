@@ -1,109 +1,93 @@
--- ########## Constantes pour le jeu ##########
+-- constantes
 
--- Nom du jeu et fichiers associés
-NOM_JEU = "Super Mario World (USA)"
-NOM_SAVESTATE = "debut.state"
-NOM_FICHIER_POPULATION = "Generation IDGeneration.pop" -- IDGeneration sera remplacé par le numéro de génération
+local CONSTANTS = {
+    -- Jeu et fichiers
+    GAME_NAME = "Super Mario World (USA)",
+    SAVESTATE_NAME = "debut.state",
+    POPULATION_FILE = "gen idGen.pop",  -- idGen sera remplacé par le nb de gen
 
--- ########## Constantes pour l'interface formulaire ##########
+    -- Dimensions du jeu et de la vue
+    FORM_WIDTH = 380,
+    FORM_HEIGHT = 385,
+    TILE_SIZE = 16,  -- Taille d'une tile dans le jeu
+    VIEW_WIDTH = 16 * 11,  -- Largeur de la vue en pixels
+    VIEW_HEIGHT = 16 * 9,  -- Hauteur de la vue en pixels
+    CAMERA_WIDTH = 256,  -- Largeur de la caméra du jeu
+    CAMERA_HEIGHT = 224,  -- Hauteur de la caméra du jeu
+    TILE_COUNT_WIDTH = 11,  -- Nombre de tiles en largeur dans la vue
+    TILE_COUNT_HEIGHT = 9,  -- Nombre de tiles en hauteur dans la vue
+    MAX_SPRITE_COUNT = 11,  -- Maximum de sprites à l'écran en même temps (0-11)
+    
+    -- Affichage des réseaux de neurones
+    DISPLAY = {
+        INPUT_SIZE = 6,  -- Taille des neurones d'entrée en pixels
+        HIDDEN_SIZE = 4,  -- Taille des neurones cachés en pixels
+        OUTPUT_WIDTH = 24,  -- Largeur des neurones de sortie en pixels
+        OUTPUT_HEIGHT = 8,  -- Hauteur des neurones de sortie en pixels
+        ANCHOR_X_INPUT = 20,
+        ANCHOR_Y_INPUT = 50,
+        ANCHOR_X_HIDDEN = 100,
+        ANCHOR_Y_HIDDEN = 50,
+        ANCHOR_X_OUTPUT = 190,
+        ANCHOR_Y_OUTPUT = 50,
+        OUTPUT_SPACING_Y = 13,  -- Espacement vertical entre les sorties en pixels
+        HIDDEN_PER_ROW = 10  -- Nombre de neurones cachés par ligne
+    },
+    
+    -- Fitness et reset
+    FITNESS_LEVEL_FINISHED = 10000,  -- Niveau de fitness pour considérer le niveau comme terminé
+    BASE_FRAME_RESET = 33,  -- Nombre de frames avant le reset de base
+    PROGRESS_FRAME_RESET = 350,  -- Nombre de frames avant le reset en cas de progression
 
--- Dimensions de la fenêtre de l'interface formulaire
-TAILLE_FORM_W = 400
-TAILLE_FORM_H = 400
+    -- Réseau de neurones
+    MAX_NEURON_COUNT = 50000,  -- Nombre maximum de neurones
+    INPUT_COUNT = 11 * 9,  -- Nombre d'entrées (TILE_COUNT_WIDTH * TILE_COUNT_HEIGHT)
+    OUTPUT_COUNT = 5,  -- Nombre de sorties (touches de la manette)
 
--- ########## Constantes pour l'interface graphique et le jeu ##########
+    -- Population
+    POPULATION_SIZE = 100,  -- Nombre d'individus dans une population
 
--- Taille d'une tuile (tile) dans le jeu
-TAILLE_TILE = 16
+    -- Constantes pour le tri des espèces
+    SPECIES = {
+        EXCESS_COEF = 0.50,
+        WEIGHT_DIFF_COEF = 0.92,
+        DIFFERENCE_THRESHOLD = 1.00
+    },
 
--- Calcul de la taille de la vue du script basée sur la taille des tuiles
-TAILLE_VUE_W = TAILLE_TILE * 16
-TAILLE_VUE_H = TAILLE_TILE * 11
+    -- Mutation
+    MUTATION = {
+        CONNECTION_RESET_CHANCE = 0.30,  -- Probabilité de réinitialisation d'une connexion
+        CONNECTION_WEIGHT_ADDITION = 0.80,  -- Probabilité d'ajout de poids de connexion
+        WEIGHT_MUTATION_CHANCE = 0.90,  -- Probabilité de mutation de poids
+        CONNECTION_MUTATION_CHANCE = 0.85,  -- Probabilité de mutation de connexion
+        NEURON_MUTATION_CHANCE = 0.35  -- Probabilité de mutation de neurone
+    },
+    
+    -- Inputs de la manette
+    BUTTONS = {
+        {name = "P1 A"},  -- Sauter
+        {name = "P1 Y"},  -- Courir
+        {name = "P1 Down"},
+        {name = "P1 Left"},
+        {name = "P1 Right"}
+    },
 
--- Dimensions de la caméra du jeu
-TAILLE_CAMERA_W = 176
-TAILLE_CAMERA_H = 240
-
--- Calcul du nombre de tuiles scannées par le réseau de neurones
-NB_TILE_W = TAILLE_VUE_W / TAILLE_TILE
-NB_TILE_H = TAILLE_VUE_H / TAILLE_TILE
-
--- Nombre maximal de sprites à l'écran en même temps dans SMW
-NB_SPRITE_MAX = 11
-
--- ########## Constantes pour l'affichage du réseau de neurones ##########
-
--- Tailles des différentes couches du réseau
-TAILLE_INPUT = 4
-TAILLE_HIDDEN = 2
-TAILLE_OUTPUT_W = 10
-TAILLE_OUTPUT_H = 5
-
--- Ancrages pour les différents éléments du réseau
-ENCRAGE_X_INPUT = 10
-ENCRAGE_Y_INPUT = 40
-ENCRAGE_X_HIDDEN = 100
-ENCRAGE_Y_HIDDEN = 40
-ENCRAGE_X_OUTPUT = 200
-ENCRAGE_Y_OUTPUT = 40
-
--- Autres paramètres d'affichage pour le réseau
-ESPACE_Y_OUTPUT = TAILLE_OUTPUT_H + 5
-NB_HIDDEN_PAR_LIGNE = 10
-
--- ########## Constantes pour la fitness ##########
-
--- Valeurs pour le calcul de la fitness
-FITNESS_LEVEL_FINI = 1000000
-NB_FRAME_RESET_BASE = 500
-NB_FRAME_RESET_PROGRES = 1155
-NB_NEURONE_MAX = 100000
-NB_INPUT = NB_TILE_W * NB_TILE_H
-NB_OUTPUT = 5
-NB_INDIVIDU_POPULATION = 100
-
--- ########## Constantes pour le tri des espèces ##########
-
--- Coefficients pour le tri des espèces
-EXCES_COEF = 0.50
-POIDSDIFF_COEF = 0.92
-DIFF_LIMITE = 1.00
-
--- ########## Constantes pour les mutations ##########
-
--- Probabilités pour les différents types de mutations
-CHANCE_MUTATION_RESET_CONNEXION = 0.20
-POIDS_CONNEXION_MUTATION_AJOUT = 0.75
-CHANCE_MUTATION_POIDS = 0.90
-CHANCE_MUTATION_CONNEXION = 0.80
-CHANCE_MUTATION_NEURONE = 0.35
-
--- ########## Correspondance des boutons avec l'émulateur ##########
-
-lesBoutons = {
-	{nom = "P1 A"}, -- sauter
-	-- {nom = "P1 B"},sauter
-	-- {nom = "P1 X"},
-	{nom = "P1 Y"}, -- courir
-	-- {nom = "P1 Up"},
-	{nom = "P1 Down"},
-	{nom = "P1 Left"},
-	{nom = "P1 Right"}
+    -- Variables globales pour le réseau de neurones et la population
+    GLOBALS = {
+        innovation_number = 0,  -- Nombre d'innovations globales pour les connexions
+        max_fitness = 0,  -- Fitness maximale atteinte
+        generation_number = 1,  -- Numéro de génération actuel
+        population_id = 1,  -- ID de la population en cours
+        mario_base_position = {},  -- Position initiale de Mario
+        level_finished = false,  -- Indicateur de niveau terminé
+        previous_populations = {},  -- Stockage des anciennes populations
+        current_frame_count = 0,  -- Nombre de frames actuelles
+        frame_stop_count = 0,  -- Pour le reset du jeu
+        initial_fitness = 0,  -- Fitness initiale
+        level_finished_saved = false,  -- Indicateur de sauvegarde de niveau terminé
+        species_list = {},  -- Liste des espèces
+        population = {}  -- Population actuelle
+    }
 }
 
--- ########## Variables globales ##########
-
--- Ces variables sont initialisées ici mais seront probablement modifiées pendant l'exécution du programme
-nbInnovation = 0
-fitnessMax = 0
-nbGeneration = 1
-idPopulation = 1
-marioBase = {}
-niveauFini = false
-lesAnciennesPopulation = {}
-nbFrame = 0
-nbFrameStop = 0
-fitnessInit = 0
-niveauFiniSauvegarde = false
-lesEspeces = {}
-laPopulation = {}
+return CONSTANTS

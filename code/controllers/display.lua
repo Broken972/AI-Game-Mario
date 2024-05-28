@@ -1,95 +1,91 @@
-function dessinerUnReseau(unReseau)
-    -- Préparation des variables
-    local lesInputs = getLesInputs()
+local CONSTANTS = require("./controllers/constant")
+local utils = require("./controllers/utils")
+
+local function dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
+    gui.drawBox(0, 0, 256, 60, "black", "white")
+    
+    -- Informations générales
+    gui.drawText(10, 4, "Generation: " .. nbGeneration, "black")
+    gui.drawText(10, 20, "Individu: " .. CONSTANTS.GLOBALS.population_id, "black")
+    gui.drawText(10, 36, "Especes: " .. #lesEspeces, "black")
+    
+    -- Fitness
+    local fitness = laPopulation[CONSTANTS.GLOBALS.population_id].fitness
+    local max_fitness = CONSTANTS.GLOBALS.max_fitness
+    -- gui.drawText(150, 4, "Fitness: " .. fitness, "black")
+    gui.drawText(150, 20, "Max Fit: " .. max_fitness, "black")
+    
+    -- Barres de progression
+    local fitness_ratio = fitness / max_fitness
+    gui.drawBox(150, 36, 150 + 100 * fitness_ratio, 46, "green", "green")
+    gui.drawBox(150 + 100 * fitness_ratio, 36, 250, 46, "red", "red")
+end
+
+local function dessinerUnReseau(unReseau)
+    local lesInputs = utils.getLesInputs()
+    local camera = utils.getPositionCamera()
     local lesPositions = {}
 
-    -- Dessin des neurones d'entrée
-    for i = 1, NB_TILE_W do
-        for j = 1, NB_TILE_H do
-            local indice = getIndiceLesInputs(i, j)
-            local xT, yT = calculerPosition(i, j, ENCRAGE_X_INPUT, ENCRAGE_Y_INPUT, TAILLE_INPUT)
-            local couleurFond = determinerCouleurFond(unReseau.lesNeurones[indice].valeur)
-            gui.drawRectangle(xT, yT, TAILLE_INPUT, TAILLE_INPUT, "black", couleurFond)
-            lesPositions[indice] = {x = xT + TAILLE_INPUT / 2, y = yT + TAILLE_INPUT / 2}
+    for i = 1, CONSTANTS.TILE_COUNT_WIDTH do
+        for j = 1, CONSTANTS.TILE_COUNT_HEIGHT do
+            local indice = utils.getIndiceLesInputs(i, j)
+            local xT = CONSTANTS.DISPLAY.ANCHOR_X_INPUT + (i - 1) * CONSTANTS.DISPLAY.INPUT_SIZE
+            local yT = CONSTANTS.DISPLAY.ANCHOR_Y_INPUT + (j - 1) * CONSTANTS.DISPLAY.INPUT_SIZE
+
+            local couleurFond = "gray"
+            if unReseau.lesNeurones[indice].valeur < 0 then
+                couleurFond = "black"
+            elseif unReseau.lesNeurones[indice].valeur > 0 then
+                couleurFond = "white"
+            end
+
+            gui.drawRectangle(xT, yT, CONSTANTS.DISPLAY.INPUT_SIZE, CONSTANTS.DISPLAY.INPUT_SIZE, "black", couleurFond)
+            lesPositions[indice] = {x = xT + CONSTANTS.DISPLAY.INPUT_SIZE / 2, y = yT + CONSTANTS.DISPLAY.INPUT_SIZE / 2}
         end
     end
 
-    -- Dessin de Mario pour la visualisation
-    dessinerMario(unReseau)
+    local mario = utils.convertirPositionPourInput(utils.getPositionMario())
+    mario.x = (mario.x - 1) * CONSTANTS.DISPLAY.INPUT_SIZE + CONSTANTS.DISPLAY.ANCHOR_X_INPUT
+    mario.y = (mario.y - 1) * CONSTANTS.DISPLAY.INPUT_SIZE + CONSTANTS.DISPLAY.ANCHOR_Y_INPUT
+    gui.drawRectangle(mario.x, mario.y, CONSTANTS.DISPLAY.INPUT_SIZE, CONSTANTS.DISPLAY.INPUT_SIZE * 2, "black", "blue")
 
-    -- Dessin des sorties
-    dessinerSorties(unReseau, lesPositions)
+    for i = 1, CONSTANTS.OUTPUT_COUNT do
+        local xT = CONSTANTS.DISPLAY.ANCHOR_X_OUTPUT
+        local yT = CONSTANTS.DISPLAY.ANCHOR_Y_OUTPUT + CONSTANTS.DISPLAY.OUTPUT_SPACING_Y * (i - 1)
+        local nomT = string.sub(CONSTANTS.BUTTONS[i].name, 4)
+        local indice = i + CONSTANTS.INPUT_COUNT
 
-    -- Dessin des neurones cachés
-    dessinerNeuronesCaches(unReseau, lesPositions)
+        local couleurFond = utils.sigmoid(unReseau.lesNeurones[indice].valeur) and "white" or "black"
+        gui.drawRectangle(xT, yT, CONSTANTS.DISPLAY.OUTPUT_WIDTH, CONSTANTS.DISPLAY.OUTPUT_HEIGHT, "white", couleurFond)
 
-    -- Dessin des connexions
-    dessinerConnexions(unReseau, lesPositions)
-end
-
-function dessinerLesInfos(laPopulation, lesEspeces, nbGeneration)
-	gui.drawBox(0, 0, 256, 36, "black", "white")
-	gui.drawText(0, 4, "Génération:" .. nbGeneration .. " Id:" .. idPopulation .. " nbEspece:" .. 
-							#lesEspeces .. "\nDistance:" .. 
-							laPopulation[idPopulation].fitness .. " (max = " .. fitnessMax .. ")", "black")
-end
-
-
-function calculerPosition(i, j, encrageX, encrageY, taille)
-    return encrageX + (i - 1) * taille, encrageY + (j - 1) * taille
-end
-
-function determinerCouleurFond(valeur)
-    if valeur < 0 then return "black"
-    elseif valeur > 0 then return "white"
-    else return "gray" end
-end
-
-function dessinerMario(unReseau)
-    local marioPos = convertirPositionPourInput(getPositionMario())
-    local x, y = calculerPosition(marioPos.x, marioPos.y, ENCRAGE_X_INPUT, ENCRAGE_Y_INPUT, TAILLE_INPUT)
-    gui.drawRectangle(x, y, TAILLE_INPUT, TAILLE_INPUT * 2, "black", "blue")
-end
-
-function dessinerSorties(unReseau, lesPositions)
-    for i = 1, NB_OUTPUT do
-        local xT = ENCRAGE_X_OUTPUT
-        local yT = ENCRAGE_Y_OUTPUT + ESPACE_Y_OUTPUT * (i - 1)
-        local nomT = string.sub(lesBoutons[i].nom, 4)
-        local indice = i + NB_INPUT
-        local couleurFond = sigmoid(unReseau.lesNeurones[indice].valeur) and "white" or "black"
-        gui.drawRectangle(xT, yT, TAILLE_OUTPUT_W, TAILLE_OUTPUT_H, "white", couleurFond)
-        
         local strValeur = string.format("%.2f", unReseau.lesNeurones[indice].valeur)
-        gui.drawText(xT + TAILLE_OUTPUT_W, yT - 1, nomT, "white", "black", 10)
-        
-        lesPositions[indice] = {x = xT + TAILLE_OUTPUT_W / 2, y = yT + TAILLE_OUTPUT_H / 2}
+        gui.drawText(xT + CONSTANTS.DISPLAY.OUTPUT_WIDTH, yT - 1, nomT, "white", "black", 10)
+        lesPositions[indice] = {x = xT + CONSTANTS.DISPLAY.OUTPUT_WIDTH / 2, y = yT + CONSTANTS.DISPLAY.OUTPUT_HEIGHT / 2}
     end
-end
 
-function dessinerNeuronesCaches(unReseau, lesPositions)
     for i = 1, unReseau.nbNeurone do
-        local xT = ENCRAGE_X_HIDDEN + (TAILLE_HIDDEN + 1) * (i - (NB_HIDDEN_PAR_LIGNE * math.floor((i-1) / NB_HIDDEN_PAR_LIGNE)))
-        local yT = ENCRAGE_Y_HIDDEN + (TAILLE_HIDDEN + 1) * math.floor((i-1) / NB_HIDDEN_PAR_LIGNE)
-        local indice = i + NB_INPUT + NB_OUTPUT
-        gui.drawRectangle(xT, yT, TAILLE_HIDDEN, TAILLE_HIDDEN, "black", "white")
-        lesPositions[indice] = {x = xT + TAILLE_HIDDEN / 2, y = yT + TAILLE_HIDDEN / 2}
-    end
-end
+        local xT = CONSTANTS.DISPLAY.ANCHOR_X_HIDDEN + (CONSTANTS.DISPLAY.HIDDEN_SIZE + 1) * ((i - 1) % CONSTANTS.DISPLAY.HIDDEN_PER_ROW)
+        local yT = CONSTANTS.DISPLAY.ANCHOR_Y_HIDDEN + (CONSTANTS.DISPLAY.HIDDEN_SIZE + 1) * math.floor((i - 1) / CONSTANTS.DISPLAY.HIDDEN_PER_ROW)
+        local indice = i + CONSTANTS.INPUT_COUNT + CONSTANTS.OUTPUT_COUNT
 
-function dessinerConnexions(unReseau, lesPositions)
+        gui.drawRectangle(xT, yT, CONSTANTS.DISPLAY.HIDDEN_SIZE, CONSTANTS.DISPLAY.HIDDEN_SIZE, "black", "white")
+        lesPositions[indice] = {x = xT + CONSTANTS.DISPLAY.HIDDEN_SIZE / 2, y = yT + CONSTANTS.DISPLAY.HIDDEN_SIZE / 2}
+    end
+
     for _, connexion in ipairs(unReseau.lesConnexions) do
         if connexion.actif then
-            local couleur = determinerCouleurConnexion(connexion)
-            gui.drawLine(lesPositions[connexion.entree].x, lesPositions[connexion.entree].y, 
-                         lesPositions[connexion.sortie].x, lesPositions[connexion.sortie].y, 
+            local pixel = connexion.poids > 0 and 255 or 0
+            local alpha = connexion.allume and 255 or 25
+            local couleur = forms.createcolor(pixel, pixel, pixel, alpha)
+
+            gui.drawLine(lesPositions[connexion.entree].x, lesPositions[connexion.entree].y,
+                         lesPositions[connexion.sortie].x, lesPositions[connexion.sortie].y,
                          couleur)
         end
     end
 end
 
-function determinerCouleurConnexion(connexion)
-    local pixel = connexion.poids > 0 and 255 or 0
-    local alpha = connexion.allume and 255 or 25
-    return forms.createcolor(pixel, pixel, pixel, alpha)
-end
+return {
+    dessinerLesInfos = dessinerLesInfos,
+    dessinerUnReseau = dessinerUnReseau
+}

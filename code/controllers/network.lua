@@ -1,103 +1,69 @@
--- Crée un nouveau neurone
-function newNeurone()
-    local neurone = {}
-    
-    neurone.valeur = 0         -- Valeur initiale du neurone
-    neurone.id = 0             -- Identifiant non initialisé si égal à 0, doit être égal à l'indice du neurone dans lesNeurones du réseau
-    neurone.type = ""          -- Type de neurone (input, hidden, output), doit être défini plus tard
-    
-    return neurone
-end
+local CONSTANTS = require("./controllers/constant")
+local utils = require("./controllers/utils")
+local neuron = require("./controllers/neuron")
 
--- applique les boutons aux joypad de l'emulateur avec un reseau de neurone
-function appliquerLesBoutons(unReseau)
-	local lesBoutonsT = {}
-	for i = 1, NB_OUTPUT, 1 do
-		lesBoutonsT[lesBoutons[i].nom] = sigmoid(unReseau.lesNeurones[NB_INPUT + i].valeur)
-	end
-
-	-- c'est pour que droit est la prio sur la gauche
-	if lesBoutonsT["P1 Left"] and lesBoutonsT["P1 Right"] then
-		lesBoutonsT["P1 Left"] = false
-	end
-	joypad.set(lesBoutonsT)
-end
-
--- Ajoute une connexion à un réseau de neurones
-function ajouterConnexion(unReseau, entree, sortie, poids)
-    -- Vérifie si les neurones de la connexion existent bien
-    if unReseau.lesNeurones[entree].id == 0 then
-        console.log("La connexion avec l'entrée " .. entree .. " n'est pas initialisée ?")
-        return
-    end
-    if unReseau.lesNeurones[sortie].id == 0 then
-        console.log("La connexion avec la sortie " .. sortie .. " n'est pas initialisée ?")
-        return
-    end
-    
-    local connexion = newConnexion()
-    connexion.actif = true
-    connexion.entree = entree
-    connexion.sortie = sortie
-    connexion.poids = genererPoids()
-    connexion.innovation = nbInnovation
-    table.insert(unReseau.lesConnexions, connexion)
-    nbInnovation = nbInnovation + 1
+-- Crée une nouvelle connexion
+local function newConnexion()
+    return {
+        entree = 0,
+        sortie = 0,
+        actif = true,
+        poids = 0,
+        innovation = 0,
+        allume = false
+    }
 end
 
 -- Crée un nouveau réseau de neurones
-function newReseau()
+local function newReseau()
     local reseau = {
-        nbNeurone = 0,         -- Taille des neurones ajoutés par l'algorithme (hors input et output)
-        fitness = 1,           -- Beaucoup de divisions, pour éviter de faire l'irréparable
+        nbNeurone = 0,
+        fitness = 1,
         idEspeceParent = 0,
-        lesNeurones = {},      -- Liste des neurones du réseau
-        lesConnexions = {}     -- Liste des connexions du réseau
+        lesNeurones = {},
+        lesConnexions = {}
     }
-
-    -- Ajoute les neurones d'entrée
-    for j = 1, NB_INPUT, 1 do
-        ajouterNeurone(reseau, j, "input", 1)
+    for j = 1, CONSTANTS.INPUT_COUNT do
+        neuron.ajouterNeurone(reseau, j, "input", 1)
     end
 
-    -- Ajoute les neurones de sortie
-    for j = NB_INPUT + 1, NB_INPUT + NB_OUTPUT, 1 do
-        ajouterNeurone(reseau, j, "output", 0)
+    for j = CONSTANTS.INPUT_COUNT + 1, CONSTANTS.INPUT_COUNT + CONSTANTS.OUTPUT_COUNT do
+        neuron.ajouterNeurone(reseau, j, "output", 0)
     end
 
     return reseau
 end
 
--- Modifie les connexions d'un réseau de neurones
-function mutationPoidsConnexions(unReseau)
-    for i = 1, #unReseau.lesConnexions, 1 do
-        local connexion = unReseau.lesConnexions[i]
-        if connexion.actif then
-            if math.random() < CHANCE_MUTATION_RESET_CONNEXION then
-                connexion.poids = genererPoids()
-            else
-                local ajustement = (math.random() >= 0.5) and -POIDS_CONNEXION_MUTATION_AJOUT or POIDS_CONNEXION_MUTATION_AJOUT
-                connexion.poids = connexion.poids + ajustement
-            end
-        end
+-- Ajoute une connexion à un réseau de neurones
+local function ajouterConnexion(unReseau, entree, sortie, poids)
+    if unReseau.lesNeurones[entree].id == 0 then
+        console.log("Erreur: Connexion avec l'entrée " .. entree .. " n'est pas initialisée.")
+    elseif unReseau.lesNeurones[sortie].id == 0 then
+        console.log("Erreur: Connexion avec la sortie " .. sortie .. " n'est pas initialisée.")
+    else
+        local connexion = newConnexion()
+        connexion.entree = entree
+        connexion.sortie = sortie
+        connexion.poids = utils.genererPoids()
+        connexion.innovation = CONSTANTS.GLOBALS.innovation_number
+        table.insert(unReseau.lesConnexions, connexion)
+        CONSTANTS.GLOBALS.innovation_number = CONSTANTS.GLOBALS.innovation_number + 1
     end
 end
 
--- Retourne la différence de poids de 2 réseaux de neurones (uniquement pour les mêmes innovations)
-function getDiffPoids(unReseau1, unReseau2)
+-- Calcule la différence de poids entre deux réseaux
+local function getDiffPoids(unReseau1, unReseau2)
     local nbConnexion = 0
     local total = 0
-    for i = 1, #unReseau1.lesConnexions, 1 do
-        for j = 1, #unReseau2.lesConnexions, 1 do
-            if unReseau1.lesConnexions[i].innovation == unReseau2.lesConnexions[j].innovation then
+    for _, conn1 in ipairs(unReseau1.lesConnexions) do
+        for _, conn2 in ipairs(unReseau2.lesConnexions) do
+            if conn1.innovation == conn2.innovation then
                 nbConnexion = nbConnexion + 1
-                total = total + math.abs(unReseau1.lesConnexions[i].poids - unReseau2.lesConnexions[j].poids)
+                total = total + math.abs(conn1.poids - conn2.poids)
             end
         end
     end
 
-    -- Si aucune connexion en commun, c'est qu'ils sont trop différents
-    -- De plus, si on laisse comme ça, on va diviser par 0 et ça causera des problèmes
     if nbConnexion == 0 then
         return 100000
     end
@@ -105,101 +71,137 @@ function getDiffPoids(unReseau1, unReseau2)
     return total / nbConnexion
 end
 
--- Retourne le nombre de connexions qui n'ont aucun rapport entre les 2 réseaux
-function getDisjoint(unReseau1, unReseau2)
+-- Calcule le nombre de connexions disjointes entre deux réseaux
+local function getDisjoint(unReseau1, unReseau2)
     local nbPareil = 0
-    for i = 1, #unReseau1.lesConnexions, 1 do
-        for j = 1, #unReseau2.lesConnexions, 1 do
-            if unReseau1.lesConnexions[i].innovation == unReseau2.lesConnexions[j].innovation then
+    for _, conn1 in ipairs(unReseau1.lesConnexions) do
+        for _, conn2 in ipairs(unReseau2.lesConnexions) do
+            if conn1.innovation == conn2.innovation then
                 nbPareil = nbPareil + 1
             end
         end
     end
 
-    -- Retourne le nombre total de connexions disjointes
     return #unReseau1.lesConnexions + #unReseau2.lesConnexions - 2 * nbPareil
 end
 
--- applique les connexions d'un réseau de neurone en modifiant la valeur des neurones de sortie
-function feedForward(unReseau)
-	-- avant de continuer, je reset à 0 les neurones de sortie
-	for i = 1, #unReseau.lesConnexions, 1 do
-		if unReseau.lesConnexions[i].actif then
-			unReseau.lesNeurones[unReseau.lesConnexions[i].sortie].valeur = 0
-			unReseau.lesNeurones[unReseau.lesConnexions[i].sortie].allume = false
-		end
-	end
-
-
-	for i = 1, #unReseau.lesConnexions, 1 do
-		if unReseau.lesConnexions[i].actif then
-			local avantTraitement = unReseau.lesNeurones[unReseau.lesConnexions[i].sortie].valeur
-			unReseau.lesNeurones[unReseau.lesConnexions[i].sortie].valeur = 
-							unReseau.lesNeurones[unReseau.lesConnexions[i].entree].valeur * 
-							unReseau.lesConnexions[i].poids + 
-							unReseau.lesNeurones[unReseau.lesConnexions[i].sortie].valeur
-			
-			-- on ""allume"" le lien si la connexion a fait une modif
-			if avantTraitement ~= unReseau.lesNeurones[unReseau.lesConnexions[i].sortie].valeur then
-				unReseau.lesConnexions[i].allume = true
-			else 
-				unReseau.lesConnexions[i].allume = false
-			end
-		end
-	end
+-- Calcule le score de similarité entre deux réseaux
+local function getScore(unReseauTest, unReseauRep)
+    return (CONSTANTS.SPECIES.EXCESS_COEF * getDisjoint(unReseauTest, unReseauRep)) /
+           (math.max(#unReseauTest.lesConnexions + #unReseauRep.lesConnexions, 1)) +
+           CONSTANTS.SPECIES.WEIGHT_DIFF_COEF * getDiffPoids(unReseauTest, unReseauRep)
 end
 
--- Ajoute un neurone à un réseau de neurones, utilisé seulement pour les neurones qui doivent exister
-function ajouterNeurone(unReseau, id, type, valeur)
-    if id == 0 then
-        console.log("La fonction ajouterNeurone ne doit pas être utilisée avec un id == 0")
-        return
+-- Propagation avant des valeurs dans le réseau
+local function feedForward(unReseau)
+    for _, conn in ipairs(unReseau.lesConnexions) do
+        if conn.actif then
+            local neurone = unReseau.lesNeurones[conn.sortie]
+            neurone.valeur = 0
+            neurone.allume = false
+        end
     end
 
-    local neurone = newNeurone()
-    neurone.id = id
-    neurone.type = type
-    neurone.valeur = valeur
-    table.insert(unReseau.lesNeurones, neurone)
-end
+    for _, conn in ipairs(unReseau.lesConnexions) do
+        if conn.actif then
+            local sortieNeurone = unReseau.lesNeurones[conn.sortie]
+            local avantTraitement = sortieNeurone.valeur
+            sortieNeurone.valeur = unReseau.lesNeurones[conn.entree].valeur * conn.poids + sortieNeurone.valeur
 
--- Ajoute un neurone (couche cachée uniquement) entre 2 neurones déjà connectés. Ne peut pas marcher
--- si il n'y a pas de connexion 
-function mutationAjouterNeurone(unReseau)
-    if #unReseau.lesConnexions == 0 then
-        console.log("Impossible d'ajouter un neurone entre 2 connexions si pas de connexion")
-        return nil
-    end
-    
-    if unReseau.nbNeurone == NB_NEURONE_MAX then
-        console.log("Nombre de neurone max atteint")
-        return nil
-    end
-
-    -- Randomisation de la liste des connexions
-    local listeRandom = {}
-    for i = 1, #unReseau.lesConnexions do
-        local pos = math.random(1, #listeRandom + 1)
-        table.insert(listeRandom, pos, i)
-    end
-
-    for _, indice in ipairs(listeRandom) do
-        local connexion = unReseau.lesConnexions[indice]
-        if connexion.actif then
-            -- Désactive la connexion existante
-            connexion.actif = false
-
-            -- Ajoute un nouveau neurone caché
-            unReseau.nbNeurone = unReseau.nbNeurone + 1
-            local indiceNeurone = unReseau.nbNeurone + NB_INPUT + NB_OUTPUT
-            ajouterNeurone(unReseau, indiceNeurone, "hidden", 1)
-
-            -- Ajoute deux nouvelles connexions
-            ajouterConnexion(unReseau, connexion.entree, indiceNeurone, genererPoids())
-            ajouterConnexion(unReseau, indiceNeurone, connexion.sortie, genererPoids())
-
-            break
+            conn.allume = avantTraitement ~= sortieNeurone.valeur
         end
     end
 end
 
+-- Croise deux réseaux pour en créer un nouveau
+local function crossover(unReseau1, unReseau2)
+    local leReseau = utils.copier((unReseau1.fitness >= unReseau2.fitness) and unReseau1 or unReseau2)
+
+    for _, conn in ipairs(unReseau2.lesConnexions) do
+        if unReseau1.lesConnexions[conn.innovation] and conn.actif and math.random() > 0.5 then
+            leReseau.lesConnexions[conn.innovation] = conn
+        end
+    end
+
+    leReseau.fitness = 1
+    return leReseau
+end
+
+-- Sauvegarde un réseau dans un fichier
+local function sauvegarderUnReseau(unReseau, fichier)
+    fichier:write(unReseau.nbNeurone .. "\n")
+    fichier:write(#unReseau.lesConnexions .. "\n")
+    fichier:write(unReseau.fitness .. "\n")
+
+    for i = 1, unReseau.nbNeurone do
+        local indice = CONSTANTS.INPUT_COUNT + CONSTANTS.OUTPUT_COUNT + i
+        fichier:write(unReseau.lesNeurones[indice].id .. "\n")
+    end
+
+    for _, conn in ipairs(unReseau.lesConnexions) do
+        fichier:write((conn.actif and 1 or 0) .. "\n")
+        fichier:write(conn.entree .. "\n")
+        fichier:write(conn.sortie .. "\n")
+        fichier:write(conn.poids .. "\n")
+        fichier:write(conn.innovation .. "\n")
+    end
+end
+
+-- Charge un réseau depuis un fichier
+local function chargerUnReseau(fichier)
+    local unReseau = newReseau()
+    unReseau.nbNeurone = tonumber(fichier:read("*line"))
+    local nbConnexion = tonumber(fichier:read("*line"))
+    unReseau.fitness = tonumber(fichier:read("*line"))
+
+    for i = 1, unReseau.nbNeurone do
+        local neurone = neuron.newNeurone()
+        neurone.id = tonumber(fichier:read("*line"))
+        neurone.type = "hidden"
+        table.insert(unReseau.lesNeurones, neurone)
+    end
+
+    for i = 1, nbConnexion do
+        local conn = newConnexion()
+        conn.actif = tonumber(fichier:read("*line")) == 1
+        conn.entree = tonumber(fichier:read("*line"))
+        conn.sortie = tonumber(fichier:read("*line"))
+        conn.poids = tonumber(fichier:read("*line"))
+        conn.innovation = tonumber(fichier:read("*line"))
+        table.insert(unReseau.lesConnexions, conn)
+    end
+
+    return unReseau
+end
+
+-- Met à jour le réseau de neurones en fonction de la position de Mario
+local function majReseau(unReseau, marioBase)
+    local mario = utils.getPositionMario()
+
+    if not CONSTANTS.GLOBALS.level_finished and memory.readbyte(0x0100) == 12 then
+        unReseau.fitness = CONSTANTS.FITNESS_LEVEL_FINISHED
+        CONSTANTS.GLOBALS.level_finished = true
+    elseif marioBase.x < mario.x then
+        unReseau.fitness = unReseau.fitness + (mario.x - marioBase.x)
+        marioBase.x = mario.x
+    end
+
+    local lesInputs = utils.getLesInputs()
+    for i = 1, CONSTANTS.INPUT_COUNT do
+        unReseau.lesNeurones[i].valeur = lesInputs[i]
+    end
+end
+
+return {
+    newConnexion = newConnexion,
+    newReseau = newReseau,
+    ajouterConnexion = ajouterConnexion,
+    getDiffPoids = getDiffPoids,
+    getDisjoint = getDisjoint,
+    getScore = getScore,
+    feedForward = feedForward,
+    crossover = crossover,
+    sauvegarderUnReseau = sauvegarderUnReseau,
+    chargerUnReseau = chargerUnReseau,
+    majReseau = majReseau
+}
