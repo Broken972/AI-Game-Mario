@@ -1,5 +1,7 @@
 emu/*
-
+.idea
 # les fichier Generation *.pop
 Generation*.pop
+gen *.pop
+
 
