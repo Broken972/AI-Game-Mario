@@ -1,0 +1,7 @@
+reseau :
+
+https://github.com/TylerLandowski/BrainHawk/tree/master
+
+https://github.com/Ashafix/PyEmuHawk/blob/master/PyEmuhawk.py
+
+https://pastebin.com/ZZmSNaHX

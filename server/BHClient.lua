@@ -14,9 +14,7 @@ RED = 0x66FF0000
 BHClient = {}
 BHClient.__index = BHClient
 
-function BHClient:new (
-    addr
-)
+function BHClient:new(addr)
     local self = {}
     setmetatable(self, BHClient)
 
@@ -454,7 +452,7 @@ function BHClient:cleanup()
 end
 
 --[[ Loads BizHawk settings from the server. Sets the emu to the base state ]]
-function BHClient:initialize ()
+function BHClient:initialize()
     -- Initialize HTTP communication with the server
     comm.httpSetPostUrl(self.addr)
 

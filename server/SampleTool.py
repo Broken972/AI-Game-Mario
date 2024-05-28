@@ -14,7 +14,7 @@ server = BHServer(
     speed = 6399,  # Emulate at 6399% original game speed (max)
     sound = False,  # Turn off sound
     rom = "D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc",  # Add a game ROM file
-    saves = {"D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc": 1.0}  # Add a save state
+    saves = {"D:/Documents/IA/AI-Game-Mario/code/debut.State": 1.0}  # Add a save state
 )
 server.start()
 
