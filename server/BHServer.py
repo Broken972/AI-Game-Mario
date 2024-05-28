@@ -98,9 +98,9 @@ class BHServer:
             # Emulation speed percentage. Higher values train models faster. Max = 6399
             speed = 6399,
             # ROM game file
-            rom = "",
+            rom = "D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc",
             # Dictionary of save states and their probabilities  {"path": prob}
-            saves = dict(),
+            saves = {"D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc": 1.0},
     ):
 
         # --------------------

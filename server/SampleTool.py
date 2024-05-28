@@ -13,8 +13,8 @@ server = BHServer(
     frameskip = 1,
     speed = 6399,  # Emulate at 6399% original game speed (max)
     sound = False,  # Turn off sound
-    rom = "ROM/MarioKart64.n64",  # Add a game ROM file
-    saves = {"Save/MarioKart64.State": 1}  # Add a save state
+    rom = "D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc",  # Add a game ROM file
+    saves = {"D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc": 1.0}  # Add a save state
 )
 server.start()
 

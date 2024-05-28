@@ -1,6 +1,4 @@
---
 -- Author: Tyler Landowski
---
 
 -- =====================================================================================================================
 -- Constants
@@ -25,11 +23,11 @@ function BHClient:new (
     -- Address of the server
     self.addr = addr or "http://127.0.0.1:1337"
     -- Path to game ROM
-    self.rom = "../../"
+    self.rom = "D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc"
     -- Path to save state
-    self.save = "../../"
+    self.save = "D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).state"
     -- How many frames before BizHawk sends and receives data from server
-    self.updateInterval = 0
+    self.updateInterval = 5
     -- How many screenshots we've taken since the last episode (probably won't be used)
     self.numScreenshots = 0
     -- How many frames we've advanced since the last update
@@ -99,7 +97,7 @@ end
 --[[ Plays the next frame using current controls ]]
 function BHClient:advanceFrame ()
     emu.frameadvance()
-	self.frames = self.frames + 1
+    self.frames = self.frames + 1
 end
 
 --[[ Applies the controls table for the current frame ]]
@@ -208,21 +206,18 @@ function BHClient:get (response)
         return self:convertValue(response)
     end
 
-    -- Convert the value based on the data type TODO
+    -- Convert the value based on the data type
     if dataType == "INT" then
         val = tonumber(val)
     elseif dataType == "BOOL" then
-        val = bool:boolFromString(val)
+        val = self:boolFromString(val)
     elseif dataType == "STRING" then
-        print("Got here STRING")
+        -- No conversion needed for strings
     elseif dataType == "INT[]" then
-        print("Got here INT[]")
         val = self:tableFromString(val)
     elseif dataType == "BOOL[]" then
-        print("Got here BOOL[]")
         val = self:tableFromString(val)
     elseif dataType == "STRING[]" then
-        print("Got here STRING[]")
         val = self:tableFromString(val)
     end
 
@@ -348,7 +343,7 @@ end
 --[[ Retrieves the game ROM from server and loads it
      Must be called at beginning of initialization, due to client.openrom()'s strange implementation ]]
 function BHClient:loadRom ()
-    self.rom = "../../" .. self:sendStr("GET rom")
+    self.rom = self:sendStr("GET rom")
 
     client.openrom(self.rom)
 end
@@ -361,7 +356,7 @@ function BHClient:setSave (save)
         return null
     end
 
-    self.save = "../../" .. save
+    self.save = save
 end
 
 --[[ Returns statement for getSave()
@@ -378,7 +373,7 @@ function BHClient:checkGuessed (guessed)
         return
     end
 
-    self.guessed = self:boolFromString(bool)
+    self.guessed = self:boolFromString(guessed)
 end
 
 --[[ Returns statement for checkGuessedStatement()
@@ -460,6 +455,7 @@ end
 
 --[[ Loads BizHawk settings from the server. Sets the emu to the base state ]]
 function BHClient:initialize ()
+    -- Initialize HTTP communication with the server
     comm.httpSetPostUrl(self.addr)
 
     if not (userdata.containskey("init") and userdata.get("init") == true) then
