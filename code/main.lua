@@ -698,21 +698,29 @@ function cullSpecies(cutToOne)
 		end
 	end
 end
+
+function tournamentSelection(species)
+    local tournamentSize = 5  -- Taille du tournoi
+    local selected = {}
+    for i = 1, tournamentSize do
+        table.insert(selected, species.genomes[math.random(#species.genomes)])
+    end
+    table.sort(selected, function(a, b) return a.fitness > b.fitness end)
+    return selected[1]
+end
  
 function breedChild(species)
-	local child = {}
-	if math.random() < CrossoverChance then
-		g1 = species.genomes[math.random(1, #species.genomes)]
-		g2 = species.genomes[math.random(1, #species.genomes)]
-		child = crossover(g1, g2)
-	else
-		g = species.genomes[math.random(1, #species.genomes)]
-		child = copyGenome(g)
-	end
- 
-	mutate(child)
- 
-	return child
+    local child = {}
+    if math.random() < CrossoverChance then
+        g1 = tournamentSelection(species)
+        g2 = tournamentSelection(species)
+        child = crossover(g1, g2)
+    else
+        g = tournamentSelection(species)
+        child = copyGenome(g)
+    end
+    mutate(child)
+    return child
 end
  
 function removeStaleSpecies()

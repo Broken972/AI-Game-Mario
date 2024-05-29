@@ -2,6 +2,7 @@
 local url = "http://127.0.0.1:8080"
 local getUrl = url .. "/get"
 local postUrl = url .. "/post"
+local screenshotUrl = url .. "/screenshot"
 local frameCount = 0
 
 -- Fonction pour effectuer la requête HTTP GET
@@ -9,14 +10,18 @@ function request()
     local res = comm.httpGet(getUrl) 
     if (res ~= '') then  -- Si la réponse n'est pas vide
         print("Action: " .. res)  
-        if (res == 'MUTE') then  
-            client.SetSoundOn(false) 
-            comm.httpPost(postUrl, "")  
-        elseif (res == 'UNMUTE') then  
-            client.SetSoundOn(true)  
-            comm.httpPost(postUrl, "")  
-        end
+        saveScreenshot()
+        
     end
+end
+
+-- Fonction pour capturer une capture d'écran et l'envoyer à une URL
+function saveScreenshot()
+    local screenshotPath = "screenshot.png"
+    client.screenshot(screenshotPath)  -- Capturer la capture d'écran et la sauvegarder localement
+    local screenshotData = io.open(screenshotPath, "rb"):read("*all")  -- Lire le fichier image
+    local response = comm.httpPost(screenshotUrl, screenshotData)  -- Envoyer les données de l'image au serveur
+    print("Screenshot sent, response: " .. response)
 end
 
 -- Boucle principale pour avancer le frame et effectuer des actions périodiquement
