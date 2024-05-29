@@ -39,10 +39,10 @@ def launch_emuhawk(emuhawk_path, rom_path, save_state_path, script_path, num_ins
     return instances
 
 def main():
-    emuhawk_path = r'D:\Documents\IA\AI-Game-Mario\emu\EmuHawk.exe'
-    rom_path = r'D:\Documents\IA\AI-Game-Mario\emu\Super Mario World (USA).sfc'
-    save_state_path = r'D:\Documents\IA\AI-Game-Mario\codeIA\best_run_20240524222530.state'
-    script_path = r'D:\Documents\IA\AI-Game-Mario\codeIA\main.lua'
+    emuhawk_path = r'D:/Documents/IA/AI-Game-Mario/emu/EmuHawk.exe'
+    rom_path = r'D:/Documents/IA/AI-Game-Mario/emu/Super Mario World (USA).sfc'
+    save_state_path = r'D:/Documents/IA/AI-Game-Mario/codeIA/best_run_20240524222530.state'
+    script_path = r'D:/Documents/IA/AI-Game-Mario/codeIA/main.lua'
     num_instances = int(input("Combien d'instances voulez-vous lancer? "))
 
     try:

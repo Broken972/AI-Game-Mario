@@ -1,11 +1,5 @@
--- MarI/O by SethBling
--- Feel free to use this code, but please do not redistribute it.
--- Intended for use with the BizHawk emulator and Super Mario World or Super Mario Bros. ROM.
--- For SMW, make sure you have a save state named "DP1.state" at the beginning of a level,
--- and put a copy in both the Lua folder and the root directory of BizHawk.
- 
 if gameinfo.getromname() == "Super Mario World (USA)" then
-	Filename = "DP1.state"
+	Filename = "Init1.state"
 	ButtonNames = {
 		"A",
 		-- "B",
