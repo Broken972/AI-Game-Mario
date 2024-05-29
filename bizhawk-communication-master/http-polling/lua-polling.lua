@@ -1,7 +1,7 @@
 -- Définir l'URL de base pour les requêtes HTTP
 local url = "http://127.0.0.1:8080"
-local getUrl = url .. "/peek"
-local postUrl = url .. "/pop"
+local getUrl = url .. "/get"
+local postUrl = url .. "/post"
 local frameCount = 0
 
 -- Fonction pour effectuer la requête HTTP GET
