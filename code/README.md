@@ -22,16 +22,6 @@ Ce projet utilise un réseau de neurones et un algorithme génétique pour entra
 ## Structure du Projet
 
 -   `main.lua`: Le point d'entrée du programme.
--   `controllers/`
-    -   `config.lua`: Paramètres de configuration et constantes.
-    -   `fileio.lua`: Fonctions pour la lecture et l'écriture de fichiers.
-    -   `game.lua`: Fonctions liées à l'état du jeu et à la lecture de la mémoire.
-    -   `genome.lua`: Fonctions liées à la gestion des génomes.
-    -   `gui.lua`: Fonctions liées à l'interface graphique.
-    -   `network.lua`: Fonctions liées aux opérations du réseau de neurones.
-    -   `pool.lua`: Fonctions liées à la gestion du pool génétique.
-    -   `species.lua`: Fonctions liées à la gestion des espèces.
-    -   `utils.lua`: Fonctions utilitaires.
 
 ## Concepts Clés
 

@@ -1,13 +1,17 @@
-
+-- MarI/O by SethBling
+-- Feel free to use this code, but please do not redistribute it.
+-- Intended for use with the BizHawk emulator and Super Mario World or Super Mario Bros. ROM.
+-- For SMW, make sure you have a save state named "DP1.state" at the beginning of a level,
+-- and put a copy in both the Lua folder and the root directory of BizHawk.
  
 if gameinfo.getromname() == "Super Mario World (USA)" then
 	Filename = "DP1.state"
 	ButtonNames = {
 		"A",
-		-- "B",
-		-- "X",
+		"B",
+		"X",
 		"Y",
-		-- "Up",
+		"Up",
 		"Down",
 		"Left",
 		"Right",
@@ -23,29 +27,27 @@ elseif gameinfo.getromname() == "Super Mario Bros." then
 		"Right",
 	}
 end
-
-local backupDir = "../code/backup/"  -- Dossier de sauvegarde
  
 BoxRadius = 6
 InputSize = (BoxRadius*2+1)*(BoxRadius*2+1)
-
+ 
 Inputs = InputSize+1
 Outputs = #ButtonNames
  
-Population = 1000
+Population = 300
 DeltaDisjoint = 2.0
 DeltaWeights = 0.4
 DeltaThreshold = 1.0
  
 StaleSpecies = 15
  
-MutateConnectionsChance = 0.3
+MutateConnectionsChance = 0.25
 PerturbChance = 0.90
-CrossoverChance = 0.70
-LinkMutationChance = 1.5
-NodeMutationChance = 0.40
+CrossoverChance = 0.75
+LinkMutationChance = 2.0
+NodeMutationChance = 0.50
 BiasMutationChance = 0.40
-StepSize = 0.2
+StepSize = 0.1
 DisableMutationChance = 0.4
 EnableMutationChance = 0.2
  
@@ -698,29 +700,21 @@ function cullSpecies(cutToOne)
 		end
 	end
 end
-
-function tournamentSelection(species)
-    local tournamentSize = 5  -- Taille du tournoi
-    local selected = {}
-    for i = 1, tournamentSize do
-        table.insert(selected, species.genomes[math.random(#species.genomes)])
-    end
-    table.sort(selected, function(a, b) return a.fitness > b.fitness end)
-    return selected[1]
-end
  
 function breedChild(species)
-    local child = {}
-    if math.random() < CrossoverChance then
-        g1 = tournamentSelection(species)
-        g2 = tournamentSelection(species)
-        child = crossover(g1, g2)
-    else
-        g = tournamentSelection(species)
-        child = copyGenome(g)
-    end
-    mutate(child)
-    return child
+	local child = {}
+	if math.random() < CrossoverChance then
+		g1 = species.genomes[math.random(1, #species.genomes)]
+		g2 = species.genomes[math.random(1, #species.genomes)]
+		child = crossover(g1, g2)
+	else
+		g = species.genomes[math.random(1, #species.genomes)]
+		child = copyGenome(g)
+	end
+ 
+	mutate(child)
+ 
+	return child
 end
  
 function removeStaleSpecies()
@@ -1017,39 +1011,38 @@ function displayGenome(genome)
 end
  
 function writeFile(filename)
-    local filepath = backupDir .. filename  -- Construire le chemin complet du fichier
-    local file = io.open(filepath, "w")
-    file:write(pool.generation .. "\n")
-    file:write(pool.maxFitness .. "\n")
-    file:write(#pool.species .. "\n")
-    for n, species in pairs(pool.species) do
-        file:write(species.topFitness .. "\n")
-        file:write(species.staleness .. "\n")
-        file:write(#species.genomes .. "\n")
-        for m, genome in pairs(species.genomes) do
-            file:write(genome.fitness .. "\n")
-            file:write(genome.maxneuron .. "\n")
-            for mutation, rate in pairs(genome.mutationRates) do
-                file:write(mutation .. "\n")
-                file:write(rate .. "\n")
-            end
-            file:write("done\n")
-
-            file:write(#genome.genes .. "\n")
-            for l, gene in pairs(genome.genes) do
-                file:write(gene.into .. " ")
-                file:write(gene.out .. " ")
-                file:write(gene.weight .. " ")
-                file:write(gene.innovation .. " ")
-                if (gene.enabled) then
-                    file:write("1\n")
-                else
-                    file:write("0\n")
-                end
-            end
+        local file = io.open(filename, "w")
+	file:write(pool.generation .. "\n")
+	file:write(pool.maxFitness .. "\n")
+	file:write(#pool.species .. "\n")
+        for n,species in pairs(pool.species) do
+		file:write(species.topFitness .. "\n")
+		file:write(species.staleness .. "\n")
+		file:write(#species.genomes .. "\n")
+		for m,genome in pairs(species.genomes) do
+			file:write(genome.fitness .. "\n")
+			file:write(genome.maxneuron .. "\n")
+			for mutation,rate in pairs(genome.mutationRates) do
+				file:write(mutation .. "\n")
+				file:write(rate .. "\n")
+			end
+			file:write("done\n")
+ 
+			file:write(#genome.genes .. "\n")
+			for l,gene in pairs(genome.genes) do
+				file:write(gene.into .. " ")
+				file:write(gene.out .. " ")
+				file:write(gene.weight .. " ")
+				file:write(gene.innovation .. " ")
+				if(gene.enabled) then
+					file:write("1\n")
+				else
+					file:write("0\n")
+				end
+			end
+		end
         end
-    end
-    file:close()
+        file:close()
 end
  
 function savePool()
@@ -1058,7 +1051,6 @@ function savePool()
 end
  
 function loadFile(filename)
-		local filepath = backupDir .. filename
         local file = io.open(filename, "r")
 	pool = newPool()
 	pool.generation = file:read("*number")
