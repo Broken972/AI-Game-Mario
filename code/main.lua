@@ -8,10 +8,10 @@ if gameinfo.getromname() == "Super Mario World (USA)" then
 	Filename = "DP1.state"
 	ButtonNames = {
 		"A",
-		"B",
-		"X",
+		-- "B",
+		-- "X",
 		"Y",
-		"Up",
+		-- "Up",
 		"Down",
 		"Left",
 		"Right",
@@ -34,7 +34,7 @@ InputSize = (BoxRadius*2+1)*(BoxRadius*2+1)
 Inputs = InputSize+1
 Outputs = #ButtonNames
  
-Population = 300
+Population = 100
 DeltaDisjoint = 2.0
 DeltaWeights = 0.4
 DeltaThreshold = 1.0
