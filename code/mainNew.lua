@@ -769,37 +769,37 @@ function addToSpecies(child)
 end
  
 function newGeneration()
-    cullSpecies(false) -- Cull the bottom half of each species
-    rankGlobally()
-    removeStaleSpecies()
-    rankGlobally()
-    for s = 1, #pool.species do
-        local species = pool.species[s]
-        calculateAverageFitness(species)
-    end
-    removeWeakSpecies()
-    local sum = totalAverageFitness()
-    local children = {}
-    for s = 1, #pool.species do
-        local species = pool.species[s]
-        breed = math.floor(species.averageFitness / sum * Population) - 1
-        for i = 1, breed do
-            table.insert(children, breedChild(species))
-        end
-    end
-    cullSpecies(true) -- Cull all but the top member of each species
-    while #children + #pool.species < Population do
-        local species = pool.species[math.random(1, #pool.species)]
-        table.insert(children, breedChild(species))
-    end
-    for c = 1, #children do
-        local child = children[c]
-        addToSpecies(child)
-    end
-
-    pool.generation = pool.generation + 1
-
-    writeFile("backup." .. pool.generation .. "." .. forms.gettext(saveLoadFile), "./backup")
+	cullSpecies(false) -- Cull the bottom half of each species
+	rankGlobally()
+	removeStaleSpecies()
+	rankGlobally()
+	for s = 1,#pool.species do
+		local species = pool.species[s]
+		calculateAverageFitness(species)
+	end
+	removeWeakSpecies()
+	local sum = totalAverageFitness()
+	local children = {}
+	for s = 1,#pool.species do
+		local species = pool.species[s]
+		breed = math.floor(species.averageFitness / sum * Population) - 1
+		for i=1,breed do
+			table.insert(children, breedChild(species))
+		end
+	end
+	cullSpecies(true) -- Cull all but the top member of each species
+	while #children + #pool.species < Population do
+		local species = pool.species[math.random(1, #pool.species)]
+		table.insert(children, breedChild(species))
+	end
+	for c=1,#children do
+		local child = children[c]
+		addToSpecies(child)
+	end
+ 
+	pool.generation = pool.generation + 1
+ 
+	writeFile("backup." .. pool.generation .. "." .. forms.gettext(saveLoadFile))
 end
  
 function initializePool()
@@ -1004,45 +1004,44 @@ function displayGenome(genome)
 	end
 end
  
-function writeFile(filename, path)
-    path = path or "."  -- Default path is current directory if none is provided
-    local file = io.open(path .. "/" .. filename, "w")
-    file:write(pool.generation .. "\n")
-    file:write(pool.maxFitness .. "\n")
-    file:write(#pool.species .. "\n")
-    for n, species in pairs(pool.species) do
-        file:write(species.topFitness .. "\n")
-        file:write(species.staleness .. "\n")
-        file:write(#species.genomes .. "\n")
-        for m, genome in pairs(species.genomes) do
-            file:write(genome.fitness .. "\n")
-            file:write(genome.maxneuron .. "\n")
-            for mutation, rate in pairs(genome.mutationRates) do
-                file:write(mutation .. "\n")
-                file:write(rate .. "\n")
-            end
-            file:write("done\n")
-
-            file:write(#genome.genes .. "\n")
-            for l, gene in pairs(genome.genes) do
-                file:write(gene.into .. " ")
-                file:write(gene.out .. " ")
-                file:write(gene.weight .. " ")
-                file:write(gene.innovation .. " ")
-                if (gene.enabled) then
-                    file:write("1\n")
-                else
-                    file:write("0\n")
-                end
-            end
+function writeFile(filename)
+        local file = io.open(filename, "w")
+	file:write(pool.generation .. "\n")
+	file:write(pool.maxFitness .. "\n")
+	file:write(#pool.species .. "\n")
+        for n,species in pairs(pool.species) do
+		file:write(species.topFitness .. "\n")
+		file:write(species.staleness .. "\n")
+		file:write(#species.genomes .. "\n")
+		for m,genome in pairs(species.genomes) do
+			file:write(genome.fitness .. "\n")
+			file:write(genome.maxneuron .. "\n")
+			for mutation,rate in pairs(genome.mutationRates) do
+				file:write(mutation .. "\n")
+				file:write(rate .. "\n")
+			end
+			file:write("done\n")
+ 
+			file:write(#genome.genes .. "\n")
+			for l,gene in pairs(genome.genes) do
+				file:write(gene.into .. " ")
+				file:write(gene.out .. " ")
+				file:write(gene.weight .. " ")
+				file:write(gene.innovation .. " ")
+				if(gene.enabled) then
+					file:write("1\n")
+				else
+					file:write("0\n")
+				end
+			end
+		end
         end
-    end
-    file:close()
+        file:close()
 end
  
 function savePool()
-    local filename = forms.gettext(saveLoadFile)
-    writeFile(filename, "./backup")
+	local filename = forms.gettext(saveLoadFile)
+	writeFile(filename)
 end
  
 function loadFile(filename)
@@ -1098,32 +1097,32 @@ function loadPool()
 end
  
 function playTop()
-    local maxfitness = 0
-    local maxs, maxg
-    for s, species in pairs(pool.species) do
-        for g, genome in pairs(species.genomes) do
-            if genome.fitness > maxfitness then
-                maxfitness = genome.fitness
-                maxs = s
-                maxg = g
-            end
-        end
-    end
-
-    pool.currentSpecies = maxs
-    pool.currentGenome = maxg
-    pool.maxFitness = maxfitness
-    forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
-    initializeRun()
-    pool.currentFrame = pool.currentFrame + 1
-    return
+	local maxfitness = 0
+	local maxs, maxg
+	for s,species in pairs(pool.species) do
+		for g,genome in pairs(species.genomes) do
+			if genome.fitness > maxfitness then
+				maxfitness = genome.fitness
+				maxs = s
+				maxg = g
+			end
+		end
+	end
+ 
+	pool.currentSpecies = maxs
+	pool.currentGenome = maxg
+	pool.maxFitness = maxfitness
+	forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
+	initializeRun()
+	pool.currentFrame = pool.currentFrame + 1
+	return
 end
  
 function onExit()
 	forms.destroy(form)
 end
  
-writeFile("temp.pool", "./backup")
+writeFile("temp.pool")
  
 event.onexit(onExit)
  
@@ -1141,78 +1140,79 @@ hideBanner = forms.checkbox(form, "Hide Banner", 5, 190)
  
  
 while true do
-    local backgroundColor = 0xD0FFFFFF
-    if not forms.ischecked(hideBanner) then
-        gui.drawBox(0, 0, 300, 26, backgroundColor, backgroundColor)
-    end
-
-    local species = pool.species[pool.currentSpecies]
-    local genome = species.genomes[pool.currentGenome]
-
-    if forms.ischecked(showNetwork) then
-        displayGenome(genome)
-    end
-
-    if pool.currentFrame % 5 == 0 then
-        evaluateCurrent()
-    end
-
-    joypad.set(controller)
-
-    getPositions()
-    if marioX > rightmost then
-        rightmost = marioX
-        timeout = TimeoutConstant
-    end
-
-    timeout = timeout - 1
-
-    local timeoutBonus = pool.currentFrame / 4
-    if timeout + timeoutBonus <= 0 then
-        local fitness = rightmost - pool.currentFrame / 2
-        if gameinfo.getromname() == "Super Mario World (USA)" and rightmost > 4816 then
-            fitness = fitness + 1000
-        end
-        if gameinfo.getromname() == "Super Mario Bros." and rightmost > 3186 then
-            fitness = fitness + 1000
-        end
-        if fitness == 0 then
-            fitness = -1
-        end
-        genome.fitness = fitness
-
-        if fitness > pool.maxFitness then
-            pool.maxFitness = fitness
-            forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
-            writeFile("backup." .. pool.generation .. "." .. forms.gettext(saveLoadFile), "./backup")
-        end
-
-        console.writeline("Gen " .. pool.generation .. " species " .. pool.currentSpecies .. " genome " .. pool.currentGenome .. " fitness: " .. fitness)
-        pool.currentSpecies = 1
-        pool.currentGenome = 1
-        while fitnessAlreadyMeasured() do
-            nextGenome()
-        end
-        initializeRun()
-    end
-
-    local measured = 0
-    local total = 0
-    for _, species in pairs(pool.species) do
-        for _, genome in pairs(species.genomes) do
-            total = total + 1
-            if genome.fitness ~= 0 then
-                measured = measured + 1
-            end
-        end
-    end
-    if not forms.ischecked(hideBanner) then
-        gui.drawText(0, 0, "Gen " .. pool.generation .. " species " .. pool.currentSpecies .. " genome " .. pool.currentGenome .. " (" .. math.floor(measured / total * 100) .. "%)", 0xFF000000, 11)
-        gui.drawText(0, 12, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus) * 2 / 3), 0xFF000000, 11)
-        gui.drawText(100, 12, "Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11)
-    end
-
-    pool.currentFrame = pool.currentFrame + 1
-
-    emu.frameadvance();
+	local backgroundColor = 0xD0FFFFFF
+	if not forms.ischecked(hideBanner) then
+		gui.drawBox(0, 0, 300, 26, backgroundColor, backgroundColor)
+	end
+ 
+	local species = pool.species[pool.currentSpecies]
+	local genome = species.genomes[pool.currentGenome]
+ 
+	if forms.ischecked(showNetwork) then
+		displayGenome(genome)
+	end
+ 
+	if pool.currentFrame%5 == 0 then
+		evaluateCurrent()
+	end
+ 
+	joypad.set(controller)
+ 
+	getPositions()
+	if marioX > rightmost then
+		rightmost = marioX
+		timeout = TimeoutConstant
+	end
+ 
+	timeout = timeout - 1
+ 
+ 
+	local timeoutBonus = pool.currentFrame / 4
+	if timeout + timeoutBonus <= 0 then
+		local fitness = rightmost - pool.currentFrame / 2
+		if gameinfo.getromname() == "Super Mario World (USA)" and rightmost > 4816 then
+			fitness = fitness + 1000
+		end
+		if gameinfo.getromname() == "Super Mario Bros." and rightmost > 3186 then
+			fitness = fitness + 1000
+		end
+		if fitness == 0 then
+			fitness = -1
+		end
+		genome.fitness = fitness
+ 
+		if fitness > pool.maxFitness then
+			pool.maxFitness = fitness
+			forms.settext(maxFitnessLabel, "Max Fitness: " .. math.floor(pool.maxFitness))
+			writeFile("backup." .. pool.generation .. "." .. forms.gettext(saveLoadFile))
+		end
+ 
+		console.writeline("Gen " .. pool.generation .. " species " .. pool.currentSpecies .. " genome " .. pool.currentGenome .. " fitness: " .. fitness)
+		pool.currentSpecies = 1
+		pool.currentGenome = 1
+		while fitnessAlreadyMeasured() do
+			nextGenome()
+		end
+		initializeRun()
+	end
+ 
+	local measured = 0
+	local total = 0
+	for _,species in pairs(pool.species) do
+		for _,genome in pairs(species.genomes) do
+			total = total + 1
+			if genome.fitness ~= 0 then
+				measured = measured + 1
+			end
+		end
+	end
+	if not forms.ischecked(hideBanner) then
+		gui.drawText(0, 0, "Gen " .. pool.generation .. " species " .. pool.currentSpecies .. " genome " .. pool.currentGenome .. " (" .. math.floor(measured/total*100) .. "%)", 0xFF000000, 11)
+		gui.drawText(0, 12, "Fitness: " .. math.floor(rightmost - (pool.currentFrame) / 2 - (timeout + timeoutBonus)*2/3), 0xFF000000, 11)
+		gui.drawText(100, 12, "Max Fitness: " .. math.floor(pool.maxFitness), 0xFF000000, 11)
+	end
+ 
+	pool.currentFrame = pool.currentFrame + 1
+ 
+	emu.frameadvance();
 end
