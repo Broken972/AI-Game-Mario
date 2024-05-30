@@ -1,6 +1,7 @@
 import subprocess
 import time
 import os
+import pygetwindow as gw
 
 def log(message):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {message}")
@@ -26,7 +27,6 @@ def launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path):
         log("Lancement de l'émulateur EmuHawk avec la ROM et le script Lua...")
         command = [
             emuhawk_path,
-            "--fullscreen",
             "--rom", rom_path,
             "--luaconsole",
             f"--lua={script_path}"
@@ -40,6 +40,31 @@ def launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path):
     except Exception as e:
         log(f"Erreur inattendue : {e}")
     return None
+
+def organize_windows(num_instances):
+    windows = [win for win in gw.getWindowsWithTitle('EmuHawk') if win.isVisible()]
+    screen_width = gw.getWindowsWithTitle('')[0].width
+    screen_height = gw.getWindowsWithTitle('')[0].height
+    
+    # Margin between windows
+    margin = 10
+    
+    rows = cols = int(num_instances ** 0.5)
+    if rows * cols < num_instances:
+        cols += 1
+    if rows * cols < num_instances:
+        rows += 1
+    
+    window_width = (screen_width - (cols + 1) * margin) // cols
+    window_height = (screen_height - (rows + 1) * margin) // rows
+
+    for i, win in enumerate(windows[:num_instances]):
+        row = i // cols
+        col = i % cols
+        x = col * (window_width + margin) + margin
+        y = row * (window_height + margin) + margin
+        win.moveTo(x, y)
+        win.resizeTo(window_width, window_height)
 
 def main():
     emuhawk_path = r'D:/Documents/IA/AI-Game-Mario/emu/EmuHawk.exe'
@@ -55,6 +80,11 @@ def main():
             if process:
                 instances.append(process)
         log(f"{num_instances} instances lancées.")
+        
+        # Organize windows after launching all instances
+        time.sleep(10)  # Wait for all instances to be fully launched
+        organize_windows(num_instances)
+        
     except Exception as e:
         log(f"Erreur : {e}")
 
