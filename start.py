@@ -29,6 +29,7 @@ def launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path):
             emuhawk_path,
             "--rom", rom_path,
             "--luaconsole",
+            # '--lua={script_path} {rom_path}'
             f"--lua={script_path}"
         ]
         process = subprocess.Popen(command)
