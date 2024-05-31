@@ -1,5 +1,5 @@
 if gameinfo.getromname() == "Super Mario World (USA)" then
-	Filename = "Init1.state"
+	Filename = "Init2.state"
 	ButtonNames = {
 		"A",
 		-- "B",
