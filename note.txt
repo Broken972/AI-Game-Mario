@@ -1,9 +1,1 @@
-reseau :
-
-https://github.com/TylerLandowski/BrainHawk/tree/master
-
-https://github.com/Ashafix/PyEmuHawk/blob/master/PyEmuhawk.py
-
-https://pastebin.com/ZZmSNaHX
-
 D:\Documents\IA\AI-Game-Mario\emu\EmuHawk.exe --url_get=127.0.0.1
