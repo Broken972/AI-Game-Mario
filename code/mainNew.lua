@@ -49,9 +49,6 @@ TimeoutConstant = 20
 cumulativeFitness = 0  -- Initialisation de la fitness cumulative
 initialFitness = 0
 initMaxFit = 0
-
-
-
  
 MaxNodes = 1000000
  
