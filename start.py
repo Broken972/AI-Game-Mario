@@ -14,7 +14,7 @@ def check_file_exists(file_path, description):
 def make_absolute_path(path):
     return os.path.abspath(path)
 
-def launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path):
+def launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path, instance_id):
     emuhawk_path = make_absolute_path(emuhawk_path)
     rom_path = make_absolute_path(rom_path)
     script_path = make_absolute_path(script_path)
@@ -29,10 +29,11 @@ def launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path):
             emuhawk_path,
             "--rom", rom_path,
             "--luaconsole",
-            # '--lua={script_path} {rom_path}'
             f"--lua={script_path}"
         ]
-        process = subprocess.Popen(command)
+        env = os.environ.copy()
+        env['INSTANCE_ID'] = str(instance_id)  # Ajouter une variable d'environnement pour l'ID de l'instance
+        process = subprocess.Popen(command, env=env)
         time.sleep(5)  # Attendre que l'émulateur se lance
         return process
 
@@ -66,6 +67,13 @@ def organize_windows(num_instances):
         y = row * (window_height + margin) + margin
         win.moveTo(x, y)
         win.resizeTo(window_width, window_height)
+        
+# start serverWeb express en bash npm run dev
+# def start_server_web():
+#     log("Démarrage du serveur Web...")
+#     command = ["npm", "run", "dev"]
+#     process = subprocess.Popen(command, cwd="D:/Documents/IA/AI-Game-Mario/serverWeb")
+#     return process
 
 def main():
     emuhawk_path = r'D:/Documents/IA/AI-Game-Mario/emu/EmuHawk.exe'
@@ -74,10 +82,12 @@ def main():
     num_instances = int(input("Combien d'instances voulez-vous lancer? "))
     instances = []
 
+    # start_server_web()
+
     try:
         for i in range(num_instances):
             log(f"Lancement de l'instance {i+1}...")
-            process = launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path)
+            process = launch_emuhawk_with_rom_and_script(emuhawk_path, rom_path, script_path, i+1)
             if process:
                 instances.append(process)
         log(f"{num_instances} instances lancées.")

@@ -1,7 +1,7 @@
 emu/*
 .idea
 .venv
-
+node_modules/
 
 # les fichier Generation *.pop
 backup/
